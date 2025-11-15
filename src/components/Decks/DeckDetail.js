@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
-import { DataContext } from '../context/DataContext';
-import FlashcardCard from './FlashcardCard';
+import { DataContext } from '../../context/DataContext';
+import FlashcardCard from '../Flashcards/FlashcardCard';
 import TimerInput from './TimerInput';
 
 export default function DeckDetail({ deckId, onBack }) {

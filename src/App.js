@@ -2,20 +2,19 @@ import React, { useState, useContext } from 'react';
 import './App.css';
 import DataProvider, { DataContext } from './context/DataContext';
 import AuthProvider, { AuthContext } from './context/AuthContext';
-import Header from './components/Header';
-import DecksList from './components/DecksList';
-import DeckDetail from './components/DeckDetail';
-import StudyMode from './components/StudyMode';
-import FlashcardCreate from './components/FlashcardCreate';
-import FlashcardCard from './components/FlashcardCard';
-import Login from './components/Login';
-import Register from './components/Register';
+import Header from './components/Decks/Header';
+import DecksList from './components/Decks/DecksList';
+import DeckDetail from './components/Decks/DeckDetail';
+import StudyMode from './components/Dashboard/StudyMode';
+import FlashcardCreate from './components/Flashcards/FlashcardCreate';
+import Login from './components/User/Login';
+import Register from './components/User/Register';
 
 function AppContent() {
   const [view, setView] = useState('dashboard');
   const [selectedDeckId, setSelectedDeckId] = useState(null);
   const [authView, setAuthView] = useState('login'); // 'login' or 'register'
-  const { data, getFlashcardsForDeck, deleteDeck } = useContext(DataContext);
+  const { data, deleteDeck } = useContext(DataContext);
   const { currentUser, logout } = useContext(AuthContext);
 
   // If not authenticated, show login/register

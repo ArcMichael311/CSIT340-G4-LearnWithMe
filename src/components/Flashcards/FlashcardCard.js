@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { DataContext } from '../context/DataContext';
+import { DataContext } from '../../context/DataContext';
 
 export default function FlashcardCard({ card = {}, deckTitle = '' }) {
   const { deleteFlashcard } = useContext(DataContext);

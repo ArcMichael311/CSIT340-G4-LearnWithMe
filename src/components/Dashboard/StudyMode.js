@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { DataContext } from '../context/DataContext';
+import { DataContext } from '../../context/DataContext';
 
 export default function StudyMode({ deckId, onBack }) {
   const { data, addProgress } = useContext(DataContext);

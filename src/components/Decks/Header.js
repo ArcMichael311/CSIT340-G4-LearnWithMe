@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import logo from '../assets/LearnWithMe.png';
+import { AuthContext } from '../../context/AuthContext';
+import logo from '../../Images/LearnWithMe.png';
 
 export default function Header({ view, onNavigate, onLogout }) {
   const { currentUser } = useContext(AuthContext);

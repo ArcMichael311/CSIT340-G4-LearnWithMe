@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { DataContext } from '../context/DataContext';
+import { DataContext } from '../../context/DataContext';
 
 export default function FlashcardCreate({ onSaved }) {
   const { createDeck } = useContext(DataContext);
@@ -39,7 +39,7 @@ export default function FlashcardCreate({ onSaved }) {
             required 
             value={deckTitle} 
             onChange={e => setDeckTitle(e.target.value)}
-            placeholder="e.g., Spanish Basics, Physics 101, etc."
+            placeholder="Example CSIT-340"
             className="form-input"
           />
         </div>
