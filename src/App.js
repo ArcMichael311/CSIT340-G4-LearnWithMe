@@ -52,7 +52,7 @@ function App() {
             <a href="#how-it-works" className="nav-link">How It Works</a>
             <a href="#testimonials" className="nav-link">Testimonials</a>
             <button 
-              className="nav-btn login-btn" 
+              className="nav-btn signup-btn" 
               onClick={() => navigateTo('login')}
             >
               Login
