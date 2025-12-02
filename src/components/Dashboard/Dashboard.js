@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './Dashboard.css';
 import Decks from '../Decks/Decks';
+import Progress from '../Progress/Progress';
 
 const Dashboard = ({ user, onLogout }) => {
   const [currentView, setCurrentView] = useState('decks');
@@ -29,13 +30,16 @@ const Dashboard = ({ user, onLogout }) => {
 
         <nav className="sidebar-nav">
           <button 
-            className={`nav-item ${currentView === 'decks' ? 'active' : ''}`}
+            className={`nav-item ${currentView === 'decks' || currentView === 'flashcards' ? 'active' : ''}`}
             onClick={handleBackToDecks}
           >
             <span className="nav-icon"></span>
             <span>My Decks</span>
           </button>
-          <button className="nav-item">
+          <button 
+            className={`nav-item ${currentView === 'progress' ? 'active' : ''}`}
+            onClick={() => setCurrentView('progress')}
+          >
             <span className="nav-icon"></span>
             <span>Progress</span>
           </button>
@@ -67,12 +71,16 @@ const Dashboard = ({ user, onLogout }) => {
 
       {/* Main Content */}
       <main className="main-content">
-        <Decks 
-          onDeckSelect={handleDeckSelect}
-          selectedDeck={selectedDeck}
-          currentView={currentView}
-          onBackToDecks={handleBackToDecks}
-        />
+        {currentView === 'progress' ? (
+          <Progress user={user} onNavigate={setCurrentView} />
+        ) : (
+          <Decks 
+            onDeckSelect={handleDeckSelect}
+            selectedDeck={selectedDeck}
+            currentView={currentView}
+            onBackToDecks={handleBackToDecks}
+          />
+        )}
       </main>
     </div>
   );
