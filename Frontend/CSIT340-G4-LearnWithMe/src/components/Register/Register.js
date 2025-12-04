@@ -21,7 +21,7 @@ const Register = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
@@ -34,11 +34,32 @@ const Register = () => {
       return;
     }
     
-    console.log('Registration submitted:', formData);
-    
-    // After successful registration, redirect to login
-    alert('Account created successfully! Please login.');
-    navigate('/login');
+    try {
+      const response = await fetch('http://localhost:8080/api/users/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          password: formData.password
+        }),
+      });
+
+      if (response.ok) {
+        const user = await response.json();
+        console.log('Registration successful:', user);
+        alert('Account created successfully! Please login.');
+        navigate('/login');
+      } else {
+        const error = await response.text();
+        alert('Registration failed: ' + error);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to connect to server. Please try again.');
+    }
   };
 
   const getPasswordStrength = () => {

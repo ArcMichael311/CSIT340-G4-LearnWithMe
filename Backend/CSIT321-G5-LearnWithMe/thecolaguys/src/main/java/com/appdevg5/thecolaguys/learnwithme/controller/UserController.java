@@ -19,6 +19,35 @@ public class UserController {
 		this.userService = userService;
 	}
 
+	@PostMapping("/register")
+	public ResponseEntity<?> register(@RequestBody UserEntity user) {
+		try {
+			// Check if email already exists
+			if (userService.existsByEmail(user.getEmail())) {
+				return ResponseEntity.badRequest().body("Email already exists");
+			}
+			
+			UserEntity registered = userService.create(user);
+			return new ResponseEntity<>(registered, HttpStatus.CREATED);
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
+		}
+	}
+
+	@PostMapping("/login")
+	public ResponseEntity<?> login(@RequestBody UserEntity loginRequest) {
+		try {
+			UserEntity user = userService.findByEmailAndPassword(loginRequest.getEmail(), loginRequest.getPassword());
+			if (user != null) {
+				return ResponseEntity.ok(user);
+			} else {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
+			}
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Login failed: " + e.getMessage());
+		}
+	}
+
 	@PostMapping("/add")
 	public ResponseEntity<UserEntity> create(@RequestBody UserEntity user) {
 		UserEntity created = userService.create(user);

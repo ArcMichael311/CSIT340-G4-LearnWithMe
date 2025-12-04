@@ -43,5 +43,13 @@ public class UserService {
 			return true;
 		}).orElse(false);
 	}
+
+	public boolean existsByEmail(String email) {
+		return userRepository.existsByEmail(email);
+	}
+
+	public UserEntity findByEmailAndPassword(String email, String password) {
+		return userRepository.findByEmailAndPassword(email, password).orElse(null);
+	}
 }
 
