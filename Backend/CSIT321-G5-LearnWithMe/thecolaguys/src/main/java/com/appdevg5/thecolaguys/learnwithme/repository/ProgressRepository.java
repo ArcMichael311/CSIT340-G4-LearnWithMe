@@ -13,4 +13,6 @@ public interface ProgressRepository extends JpaRepository<ProgressEntity, Long> 
 
 	List<ProgressEntity> findByCardId(Long cardId);
 
+	List<ProgressEntity> findByDeckId(Long deckId);
+
 }
