@@ -3,6 +3,7 @@ package com.appdevg5.thecolaguys.learnwithme.service;
 import com.appdevg5.thecolaguys.learnwithme.entity.FlashcardsEntity;
 import com.appdevg5.thecolaguys.learnwithme.repository.FlashcardsRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,5 +47,10 @@ public class FlashcardsService {
 			flashcardsRepository.deleteById(id);
 			return true;
 		}).orElse(false);
+	}
+
+	@Transactional
+	public void deleteByDeckId(Long deckId) {
+		flashcardsRepository.deleteByDeckId(deckId);
 	}
 }
