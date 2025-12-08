@@ -25,14 +25,18 @@ public class FlashcardsEntity {
 	@Column(name = "deck_id", nullable = false)
 	private Long deckId;
 
+	@Column(name = "options", columnDefinition = "JSON", nullable = true)
+	private String options;
+
 	public FlashcardsEntity() {
 	}
 
-	public FlashcardsEntity(Long cardId, String question, String answer, Long deckId) {
+	public FlashcardsEntity(Long cardId, String question, String answer, Long deckId, String options) {
 		this.cardId = cardId;
 		this.question = question;
 		this.answer = answer;
 		this.deckId = deckId;
+		this.options = options;
 	}
 
 	public Long getCardId() {
@@ -65,5 +69,13 @@ public class FlashcardsEntity {
 
 	public void setDeckId(Long deckId) {
 		this.deckId = deckId;
+	}
+
+	public String getOptions() {
+		return options;
+	}
+
+	public void setOptions(String options) {
+		this.options = options;
 	}
 }
