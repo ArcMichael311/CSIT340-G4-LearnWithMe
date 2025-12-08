@@ -10,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/flashcards")
+@CrossOrigin(origins = "http://localhost:3000")
 public class FlashcardsController {
 
     private final FlashcardsService flashcardsService;
