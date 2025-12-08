@@ -1,27 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Decks.css';
 import Flashcards from '../Flashcards/Flashcards';
 
 const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
-  const [decks, setDecks] = useState([
-    {
-      id: 1,
-      title: 'Spanish Vocabulary',
-      description: 'Common Spanish words and phrases',
-      cardCount: 25,
-      color: '#667eea',
-      lastStudied: '2 days ago'
-    },
-    {
-      id: 2,
-      title: 'Biology Chapter 5',
-      description: 'Cell structure and functions',
-      cardCount: 42,
-      color: '#48bb78',
-      lastStudied: '1 week ago'
-    }
-  ]);
-
+  const [decks, setDecks] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newDeck, setNewDeck] = useState({
     title: '',
@@ -30,29 +13,149 @@ const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
   });
 
   const colors = ['#667eea', '#48bb78', '#f56565', '#ed8936', '#9f7aea', '#38b2ac'];
+  const API_BASE_URL = 'http://localhost:8080/api/decks';
+  const FLASHCARDS_API_URL = 'http://localhost:8080/api/flashcards';
 
-  const handleCreateDeck = (e) => {
-    e.preventDefault();
-    const deck = {
-      id: Date.now(),
-      ...newDeck,
-      cardCount: 0,
-      lastStudied: 'Never'
-    };
-    setDecks([...decks, deck]);
-    setShowCreateModal(false);
-    setNewDeck({ title: '', description: '', color: '#667eea' });
+  // Fetch decks from backend on component mount
+  useEffect(() => {
+    fetchDecks();
+  }, []);
+
+  const fetchDecks = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(API_BASE_URL);
+      if (response.ok) {
+        const data = await response.json();
+        // Fetch card counts for each deck and check study status
+        const decksWithCounts = await Promise.all(
+          data.map(async (deck) => {
+            try {
+              const cardsResponse = await fetch(`${FLASHCARDS_API_URL}/deck/${deck.deckId}`);
+              const cards = cardsResponse.ok ? await cardsResponse.json() : [];
+              
+              // Check if deck was studied today from Progress table
+              let isStudied = false;
+              try {
+                const progressResponse = await fetch(`http://localhost:8080/api/progress/deck/${deck.deckId}`);
+                if (progressResponse.ok) {
+                  const progressList = await progressResponse.json();
+                  if (progressList && progressList.length > 0) {
+                    const today = new Date().toISOString().split('T')[0];
+                    // Check if any progress record is from today
+                    isStudied = progressList.some(p => p.date === today);
+                  }
+                }
+              } catch (progressError) {
+                console.error('Error fetching progress:', progressError);
+              }
+              
+              return {
+                ...deck,
+                cardCount: cards.length,
+                color: '#667eea', // Default color
+                isStudied: isStudied
+              };
+            } catch (error) {
+              console.error('Error fetching card count:', error);
+              return {
+                ...deck,
+                cardCount: 0,
+                color: '#667eea',
+                isStudied: false
+              };
+            }
+          })
+        );
+        setDecks(decksWithCounts);
+      }
+    } catch (error) {
+      console.error('Error fetching decks:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteDeck = (id) => {
-    if (window.confirm('Are you sure you want to delete this deck?')) {
-      setDecks(decks.filter(deck => deck.id !== id));
+  const handleCreateDeck = async (e) => {
+    e.preventDefault();
+    
+    // Prepare deck object for backend
+    const deckToCreate = {
+      title: newDeck.title,
+      description: newDeck.description
+    };
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(deckToCreate)
+      });
+
+      if (response.ok) {
+        const createdDeck = await response.json();
+        
+        // Fetch card count for the newly created deck
+        const cardsResponse = await fetch(`${FLASHCARDS_API_URL}/deck/${createdDeck.deckId}`);
+        const cards = cardsResponse.ok ? await cardsResponse.json() : [];
+        
+        // Add color and card count to the created deck
+        const deckWithColor = { 
+          ...createdDeck, 
+          color: newDeck.color,
+          cardCount: cards.length,
+          isStudied: false
+        };
+        setDecks([...decks, deckWithColor]);
+        setShowCreateModal(false);
+        setNewDeck({ title: '', description: '', color: '#667eea' });
+      } else {
+        console.error('Error creating deck:', response.statusText);
+        alert('Failed to create deck. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating deck:', error);
+      alert('Error creating deck: ' + error.message);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleDeleteDeck = async (id) => {
+    if (window.confirm('Are you sure you want to delete this deck?')) {
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_BASE_URL}/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          setDecks(decks.filter(deck => deck.deckId !== id));
+        } else {
+          console.error('Error deleting deck:', response.statusText);
+          alert('Failed to delete deck. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error deleting deck:', error);
+        alert('Error deleting deck: ' + error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleBackFromFlashcards = () => {
+    // Refresh decks to update card counts
+    fetchDecks();
+    onBackToDecks();
   };
 
   // Show flashcards if a deck is selected
   if (currentView === 'flashcards' && selectedDeck) {
-    return <Flashcards deck={selectedDeck} onBack={onBackToDecks} />;
+    return <Flashcards deck={selectedDeck} onBack={handleBackFromFlashcards} />;
   }
 
   return (
@@ -69,12 +172,12 @@ const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
 
       <div className="decks-grid">
         {decks.map(deck => (
-          <div key={deck.id} className="deck-card" style={{ borderTopColor: deck.color }}>
+          <div key={deck.deckId} className="deck-card" style={{ borderTopColor: deck.color }}>
             <div className="deck-card-header">
               <div className="deck-color-dot" style={{ background: deck.color }}></div>
               <button 
                 className="deck-delete-btn"
-                onClick={() => handleDeleteDeck(deck.id)}
+                onClick={() => handleDeleteDeck(deck.deckId)}
                 title="Delete deck"
               >
                 Delete Deck
@@ -87,11 +190,11 @@ const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
             <div className="deck-stats">
               <div className="stat">
                 <span className="stat-icon"></span>
-                <span>{deck.cardCount} cards</span>
+                <span>{deck.cardCount || 0} cards</span>
               </div>
               <div className="stat">
                 <span className="stat-icon"></span>
-                <span>{deck.lastStudied}</span>
+                <span>{deck.isStudied ? '✓ Studied today' : '○ Not studied yet'}</span>
               </div>
             </div>
 
