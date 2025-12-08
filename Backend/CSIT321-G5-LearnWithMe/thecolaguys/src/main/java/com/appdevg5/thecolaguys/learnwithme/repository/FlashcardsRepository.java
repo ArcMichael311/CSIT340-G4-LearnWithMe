@@ -9,4 +9,6 @@ public interface FlashcardsRepository extends JpaRepository<FlashcardsEntity, Lo
 
 	java.util.List<FlashcardsEntity> findByDeckId(Long deckId);
 
+	void deleteByDeckId(Long deckId);
+
 }
