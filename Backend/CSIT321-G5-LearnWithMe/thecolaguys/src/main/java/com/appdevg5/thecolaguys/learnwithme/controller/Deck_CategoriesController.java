@@ -10,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/deck-categories")
+@CrossOrigin(origins = "http://localhost:3000")
 public class Deck_CategoriesController {
 
     private final Deck_CategoriesService deck_categoriesService;
