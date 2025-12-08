@@ -10,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/decks")
+@CrossOrigin(origins = "http://localhost:3000")
 public class DecksController {
 
 	private final DecksService decksService;
@@ -45,7 +46,13 @@ public class DecksController {
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
-		decksService.deleteById(id);
-		return ResponseEntity.noContent().build();
+		try {
+			decksService.deleteById(id);
+			return ResponseEntity.noContent().build();
+		} catch (Exception e) {
+			System.err.println("Error deleting deck: " + e.getMessage());
+			e.printStackTrace();
+			return ResponseEntity.internalServerError().build();
+		}
 	}
 }
