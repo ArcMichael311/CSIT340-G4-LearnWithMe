@@ -36,10 +36,15 @@ public class ProgressService {
 		return progressRepository.findByCardId(cardId);
 	}
 
+	public List<ProgressEntity> getByDeckId(Long deckId) {
+		return progressRepository.findByDeckId(deckId);
+	}
+
 	public Optional<ProgressEntity> update(Long id, ProgressEntity updated) {
 		return progressRepository.findById(id).map(existing -> {
 			existing.setUserId(updated.getUserId());
 			existing.setCardId(updated.getCardId());
+			existing.setDeckId(updated.getDeckId());
 			existing.setStatus(updated.getStatus());
 			existing.setDate(updated.getDate());
 			return progressRepository.save(existing);
