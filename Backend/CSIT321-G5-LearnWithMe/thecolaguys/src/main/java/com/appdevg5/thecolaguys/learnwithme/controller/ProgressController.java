@@ -10,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/progress")
+@CrossOrigin(origins = "http://localhost:3000")
 public class ProgressController {
 
     private final ProgressService progressService;
@@ -44,6 +45,11 @@ public class ProgressController {
     @GetMapping("/card/{cardId}")
     public ResponseEntity<List<ProgressEntity>> getByCard(@PathVariable Long cardId) {
         return ResponseEntity.ok(progressService.getByCardId(cardId));
+    }
+
+    @GetMapping("/deck/{deckId}")
+    public ResponseEntity<List<ProgressEntity>> getByDeck(@PathVariable Long deckId) {
+        return ResponseEntity.ok(progressService.getByDeckId(deckId));
     }
 
     @PutMapping("/update/{id}")
