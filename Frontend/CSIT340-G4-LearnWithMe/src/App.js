@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import './App.css';
 import Login from './components/Login/Login';
@@ -6,7 +6,20 @@ import Register from './components/Register/Register';
 import Dashboard from './components/Dashboard/Dashboard';
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    // Initialize state from localStorage
+    const savedUser = localStorage.getItem('currentUser');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
+  // Persist user data to localStorage whenever it changes
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('currentUser');
+    }
+  }, [currentUser]);
 
   // Handle successful login
   const handleLogin = (userData) => {
@@ -54,7 +67,6 @@ function LandingPage() {
           <div className="nav-links">
             <a href="#features" className="nav-link">Features</a>
             <a href="#how-it-works" className="nav-link">How It Works</a>
-            <a href="#testimonials" className="nav-link">Testimonials</a>
             <button 
               className="nav-btn login-btn" 
               onClick={() => navigate('/login')}
@@ -88,9 +100,6 @@ function LandingPage() {
               onClick={() => navigate('/register')}
             >
               Get Started Free
-            </button>
-            <button className="cta-secondary">
-              Watch Demo
             </button>
           </div>
           <p className="hero-note">No credit card required • Free forever</p>
@@ -184,41 +193,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section id="testimonials" className="testimonials">
-        <h2 className="section-title">Loved by Students Worldwide</h2>
-        <p className="section-subtitle">Join thousands of successful learners</p>
-        
-        <div className="testimonials-grid">
-          <div className="testimonial-card">
-            <div className="stars">⭐⭐⭐⭐⭐</div>
-            <p>"LearnWithMe helped me ace my medical exams! The spaced repetition is a game-changer."</p>
-            <div className="testimonial-author">
-              <strong>Sarah Chen</strong>
-              <span>Medical Student</span>
-            </div>
-          </div>
-          
-          <div className="testimonial-card">
-            <div className="stars">⭐⭐⭐⭐⭐</div>
-            <p>"I went from struggling with vocabulary to speaking confidently in just 3 months!"</p>
-            <div className="testimonial-author">
-              <strong>Miguel Rodriguez</strong>
-              <span>Language Learner</span>
-            </div>
-          </div>
-          
-          <div className="testimonial-card">
-            <div className="stars">⭐⭐⭐⭐⭐</div>
-            <p>"The best study tool I've ever used. Simple, effective, and actually fun to use!"</p>
-            <div className="testimonial-author">
-              <strong>Emily Watson</strong>
-              <span>High School Student</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="cta-section">
         <div className="cta-content">
@@ -235,37 +209,6 @@ function LandingPage() {
 
       {/* Footer */}
       <footer className="footer">
-        <div className="footer-content">
-          <div className="footer-section">
-            <div className="footer-logo">
-              <span className="logo-icon">📚</span>
-              <span className="logo-text">LearnWithMe</span>
-            </div>
-            <p>Empowering learners worldwide with smart study tools.</p>
-          </div>
-          
-          <div className="footer-section">
-            <h4>Product</h4>
-            <a href="#features">Features</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#mobile">Mobile App</a>
-          </div>
-          
-          <div className="footer-section">
-            <h4>Company</h4>
-            <a href="#about">About Us</a>
-            <a href="#contact">Contact</a>
-            <a href="#careers">Careers</a>
-          </div>
-          
-          <div className="footer-section">
-            <h4>Resources</h4>
-            <a href="#blog">Blog</a>
-            <a href="#help">Help Center</a>
-            <a href="#community">Community</a>
-          </div>
-        </div>
-        
         <div className="footer-bottom">
           <p>&copy; 2024 LearnWithMe. All rights reserved.</p>
           <div className="footer-links">

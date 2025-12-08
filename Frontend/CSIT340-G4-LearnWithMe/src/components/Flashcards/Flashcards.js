@@ -214,13 +214,19 @@ const Flashcards = ({ deck, onBack }) => {
           </button>
           <div className="header-info">
             <div className="score-display">
-              🏆 Score: {score}/{flashcards.length}
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+              </svg>
+              Score: {score}/{flashcards.length}
             </div>
             <div className="progress-info">
               Card {currentCardIndex + 1} of {flashcards.length}
             </div>
             <div className={`timer ${timeRemaining <= 5 ? 'urgent' : ''}`}>
-              ⏱️ {timeRemaining}s
+              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C16.07 4.74 14.12 4 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+              </svg>
+              {timeRemaining}s
             </div>
           </div>
         </div>
@@ -228,10 +234,38 @@ const Flashcards = ({ deck, onBack }) => {
         <div className="study-container">
           <div className="question-card">
             <div className="card-type-badge">
-              {currentCard.type === 'multiple-choice' && '📝 Multiple Choice'}
-              {currentCard.type === 'fill-blank' && '✍️ Fill in the Blank'}
-              {currentCard.type === 'short-answer' && '💬 Short Answer'}
-              {currentCard.type === 'long-answer' && '📄 Long Answer'}
+              {currentCard.type === 'multiple-choice' && (
+                <>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                  </svg>
+                  Multiple Choice
+                </>
+              )}
+              {currentCard.type === 'fill-blank' && (
+                <>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                    <path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"/>
+                  </svg>
+                  Fill in the Blank
+                </>
+              )}
+              {currentCard.type === 'short-answer' && (
+                <>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+                  </svg>
+                  Short Answer
+                </>
+              )}
+              {currentCard.type === 'long-answer' && (
+                <>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                  </svg>
+                  Long Answer
+                </>
+              )}
             </div>
 
             <div className="question-text">{currentCard.front}</div>
@@ -293,7 +327,10 @@ const Flashcards = ({ deck, onBack }) => {
                     (currentCard.type !== 'multiple-choice' && !userAnswer.trim())
                   }
                 >
-                  ✓ Check Answer
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                  </svg>
+                  Check Answer
                 </button>
 
                 <button 
@@ -311,12 +348,20 @@ const Flashcards = ({ deck, onBack }) => {
                   <div className={`result-banner ${isCorrect ? 'correct' : 'incorrect'}`}>
                     {isCorrect ? (
                       <>
-                        <span className="result-icon">✓</span>
+                        <span className="result-icon">
+                          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                          </svg>
+                        </span>
                         <span className="result-text">Correct! +1 point</span>
                       </>
                     ) : (
                       <>
-                        <span className="result-icon">✗</span>
+                        <span className="result-icon">
+                          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                          </svg>
+                        </span>
                         <span className="result-text">Incorrect</span>
                       </>
                     )}
@@ -361,7 +406,10 @@ const Flashcards = ({ deck, onBack }) => {
                   (currentCard.type !== 'multiple-choice' && !userAnswer.trim())
                 }
               >
-                ✓ Check Answer
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                Check Answer
               </button>
             ) : (
               <button 
@@ -406,7 +454,12 @@ const Flashcards = ({ deck, onBack }) => {
         </div>
         <div className="header-actions">
           <button className="study-btn" onClick={handleStartStudy}>
-            <span>🎯</span> Study Mode
+            <span>
+              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+              </svg>
+            </span>
+            Study Mode
           </button>
           <button className="create-card-btn" onClick={() => setShowCreateModal(true)}>
             <span>+</span> Add Card
@@ -419,12 +472,45 @@ const Flashcards = ({ deck, onBack }) => {
           <div key={card.id} className="flashcard-item">
             <div className="card-number">#{index + 1}</div>
             <div className="card-type-indicator">
-              {card.type === 'multiple-choice' && '📝 Multiple Choice'}
-              {card.type === 'fill-blank' && '✍️ Fill in the Blank'}
-              {card.type === 'short-answer' && '💬 Short Answer'}
-              {card.type === 'long-answer' && '📄 Long Answer'}
+              {card.type === 'multiple-choice' && (
+                <>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style={{marginRight: '4px', verticalAlign: 'middle'}}>
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                  </svg>
+                  Multiple Choice
+                </>
+              )}
+              {card.type === 'fill-blank' && (
+                <>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style={{marginRight: '4px', verticalAlign: 'middle'}}>
+                    <path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"/>
+                  </svg>
+                  Fill in the Blank
+                </>
+              )}
+              {card.type === 'short-answer' && (
+                <>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style={{marginRight: '4px', verticalAlign: 'middle'}}>
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+                  </svg>
+                  Short Answer
+                </>
+              )}
+              {card.type === 'long-answer' && (
+                <>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style={{marginRight: '4px', verticalAlign: 'middle'}}>
+                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                  </svg>
+                  Long Answer
+                </>
+              )}
             </div>
-            <div className="card-timer-indicator">⏱️ {card.timer}s</div>
+            <div className="card-timer-indicator">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style={{marginRight: '4px', verticalAlign: 'middle'}}>
+                <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C16.07 4.74 14.12 4 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+              </svg>
+              {card.timer}s
+            </div>
             <div className="card-content-preview">
               <div className="card-side">
                 <div className="side-label">Front</div>

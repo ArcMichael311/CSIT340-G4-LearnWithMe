@@ -1,16 +1,16 @@
 .dashboard {
   display: flex;
   height: 100vh;
-  background: #0d1117;
+  background: #1a1a1a;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  color: #c9d1d9;
+  color: #f2f2f2;
 }
 
 /* Sidebar */
 .sidebar {
   width: 280px;
-  background: #161b22;
-  border-right: 1px solid #30363d;
+  background: #2a2a2a;
+  border-right: 1px solid #404040;
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 10px rgba(33, 255, 176, 0.1);
@@ -18,17 +18,38 @@
 
 .sidebar-header {
   padding: 1.5rem;
-  border-bottom: 1px solid #30363d;
+  border-bottom: 1px solid #404040;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
   font-size: 1.5rem;
   font-weight: 800;
-  color: #21ffb0;
-  text-shadow: 0 0 8px rgba(33, 255, 176, 0.6);
+  transition: all 0.2s;
+  border-radius: 8px;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}
+
+.logo-icon {
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #f2b705 0%, #f2522e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
 }
 
 .logo-icon {
@@ -53,7 +74,7 @@
   border-radius: 12px;
   font-size: 1rem;
   font-weight: 500;
-  color: #8b949e;
+  color: #a0a0a0;
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
@@ -62,24 +83,26 @@
 
 .nav-item:hover {
   background: rgba(33, 255, 176, 0.1);
-  color: #21ffb0;
+  color: #f2b705;
   box-shadow: 0 0 10px rgba(33, 255, 176, 0.4);
 }
 
 .nav-item.active {
   background: linear-gradient(135deg, rgba(33, 255, 176, 0.2) 0%, rgba(0, 194, 255, 0.2) 100%);
-  color: #21ffb0;
+  color: #f2b705;
   font-weight: 600;
   box-shadow: 0 0 12px rgba(33, 255, 176, 0.5);
 }
 
 .nav-icon {
-  font-size: 1.25rem;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .sidebar-footer {
   padding: 1rem;
-  border-top: 1px solid #30363d;
+  border-top: 1px solid #404040;
 }
 
 .user-info {
@@ -93,8 +116,8 @@
 .user-avatar {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #21ffb0 0%, #00c2ff 100%);
-  color: #0d1117;
+  background: linear-gradient(135deg, #f2b705 0%, #f2522e 100%);
+  color: #1a1a1a;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -111,7 +134,7 @@
 
 .user-name {
   font-weight: 600;
-  color: #c9d1d9;
+  color: #f2f2f2;
   font-size: 0.875rem;
   white-space: nowrap;
   overflow: hidden;
@@ -120,7 +143,7 @@
 
 .user-email {
   font-size: 0.75rem;
-  color: #8b949e;
+  color: #a0a0a0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -174,3 +197,4 @@
     padding: 1rem;
   }
 }
+
