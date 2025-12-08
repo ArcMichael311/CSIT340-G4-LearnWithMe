@@ -23,6 +23,9 @@ public class ProgressEntity {
 	@Column(name = "card_id", nullable = false)
 	private Long cardId;
 
+	@Column(name = "deck_id", nullable = false)
+	private Long deckId;
+
 	@Column(nullable = false)
 	private String status;
 
@@ -32,10 +35,11 @@ public class ProgressEntity {
 	public ProgressEntity() {
 	}
 
-	public ProgressEntity(Long progressId, Long userId, Long cardId, String status, LocalDate date) {
+	public ProgressEntity(Long progressId, Long userId, Long cardId, Long deckId, String status, LocalDate date) {
 		this.progressId = progressId;
 		this.userId = userId;
 		this.cardId = cardId;
+		this.deckId = deckId;
 		this.status = status;
 		this.date = date;
 	}
@@ -62,6 +66,14 @@ public class ProgressEntity {
 
 	public void setCardId(Long cardId) {
 		this.cardId = cardId;
+	}
+
+	public Long getDeckId() {
+		return deckId;
+	}
+
+	public void setDeckId(Long deckId) {
+		this.deckId = deckId;
 	}
 
 	public String getStatus() {
