@@ -1,25 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Flashcards.css';
 
 const Flashcards = ({ deck, onBack }) => {
-  const [flashcards, setFlashcards] = useState([
-    {
-      id: 1,
-      front: 'What is photosynthesis?',
-      back: 'The process by which plants use sunlight, water and carbon dioxide to produce oxygen and energy in the form of sugar.',
-      type: 'short-answer',
-      timer: 30,
-      options: []
-    },
-    {
-      id: 2,
-      front: '¿Cómo estás?',
-      back: 'How are you? (Spanish)',
-      type: 'fill-blank',
-      timer: 15,
-      options: []
-    }
-  ]);
+  const [flashcards, setFlashcards] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newCard, setNewCard] = useState({ 
@@ -27,7 +11,8 @@ const Flashcards = ({ deck, onBack }) => {
     back: '', 
     type: 'multiple-choice',
     timer: 30,
-    options: ['', '', '', '']
+    options: ['', '', '', ''],
+    correctAnswerIndex: 0
   });
   const [studyMode, setStudyMode] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -37,12 +22,85 @@ const Flashcards = ({ deck, onBack }) => {
   const [userAnswer, setUserAnswer] = useState('');
   const [selectedOption, setSelectedOption] = useState(null);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [cardAnswerStates, setCardAnswerStates] = useState({}); // Track which cards have shown answers
   const [score, setScore] = useState(0);
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [isCorrect, setIsCorrect] = useState(null);
   const [hasCheckedAnswer, setHasCheckedAnswer] = useState(false);
 
-  const handleCreateCard = (e) => {
+  const API_BASE_URL = 'http://localhost:8080/api/flashcards';
+
+  // Fetch flashcards for this deck when component mounts
+  useEffect(() => {
+    if (deck && deck.deckId) {
+      fetchFlashcards();
+    }
+  }, [deck]);
+
+  const fetchFlashcards = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/deck/${deck.deckId}`);
+      if (response.ok) {
+        const data = await response.json();
+        // Transform backend data to match frontend structure
+        const transformedData = data.map(card => {
+          let options = [];
+          
+          // Try to parse stored options
+          if (card.options) {
+            try {
+              options = JSON.parse(card.options);
+            } catch (e) {
+              // If parsing fails, generate random wrong answers
+              options = [card.answer, ...generateWrongAnswers(card.answer)].sort(() => Math.random() - 0.5);
+            }
+          } else {
+            // If no options stored, generate random wrong answers
+            options = [card.answer, ...generateWrongAnswers(card.answer)].sort(() => Math.random() - 0.5);
+          }
+          
+          return {
+            id: card.cardId,
+            front: card.question,
+            back: card.answer,
+            type: 'multiple-choice',
+            timer: 30,
+            options: options
+          };
+        });
+        setFlashcards(transformedData);
+      }
+    } catch (error) {
+      console.error('Error fetching flashcards:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate random wrong answers for multiple choice
+  const generateWrongAnswers = (correctAnswer) => {
+    const wrongAnswers = [
+      'Option A',
+      'Option B', 
+      'Option C',
+      'Not the correct answer',
+      'This is wrong',
+      'Incorrect choice',
+      'Try again',
+      'False',
+      'No',
+      'Maybe',
+      'Unknown',
+      'Not applicable'
+    ];
+    
+    // Shuffle and take 3 random wrong answers
+    const shuffled = wrongAnswers.sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  };
+
+  const handleCreateCard = async (e) => {
     e.preventDefault();
     
     // Validate multiple choice options
@@ -52,27 +110,85 @@ const Flashcards = ({ deck, onBack }) => {
         alert('Please provide at least 2 options for multiple choice!');
         return;
       }
+      if (newCard.correctAnswerIndex === null || newCard.correctAnswerIndex === undefined) {
+        alert('Please select the correct answer!');
+        return;
+      }
     }
     
-    const card = {
-      id: Date.now(),
-      ...newCard,
-      options: newCard.type === 'multiple-choice' ? newCard.options.filter(opt => opt.trim() !== '') : []
+    // Prepare card data for backend
+    const correctAnswer = newCard.options[newCard.correctAnswerIndex];
+    const filledOptions = newCard.options.filter(opt => opt.trim() !== '');
+    const cardToCreate = {
+      question: newCard.front,
+      answer: correctAnswer,
+      deckId: deck.deckId,
+      options: JSON.stringify(filledOptions) // Store all options as JSON
     };
-    setFlashcards([...flashcards, card]);
-    setShowCreateModal(false);
-    setNewCard({ 
-      front: '', 
-      back: '', 
-      type: 'multiple-choice',
-      timer: 30,
-      options: ['', '', '', '']
-    });
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(cardToCreate)
+      });
+
+      if (response.ok) {
+        const createdCard = await response.json();
+        // Transform and add to local state
+        const newFlashcard = {
+          id: createdCard.cardId,
+          front: createdCard.question,
+          back: createdCard.answer,
+          type: 'multiple-choice',
+          timer: newCard.timer,
+          options: newCard.options.filter(opt => opt.trim() !== '')
+        };
+        setFlashcards([...flashcards, newFlashcard]);
+        setShowCreateModal(false);
+        setNewCard({ 
+          front: '', 
+          back: '', 
+          type: 'multiple-choice',
+          timer: 30,
+          options: ['', '', '', ''],
+          correctAnswerIndex: 0
+        });
+      } else {
+        console.error('Error creating card:', response.statusText);
+        alert('Failed to create flashcard. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating card:', error);
+      alert('Error creating flashcard: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteCard = (id) => {
+  const handleDeleteCard = async (id) => {
     if (window.confirm('Are you sure you want to delete this card?')) {
-      setFlashcards(flashcards.filter(card => card.id !== id));
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_BASE_URL}/delete/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          setFlashcards(flashcards.filter(card => card.id !== id));
+        } else {
+          console.error('Error deleting card:', response.statusText);
+          alert('Failed to delete flashcard. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error deleting card:', error);
+        alert('Error deleting flashcard: ' + error.message);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -91,9 +207,48 @@ const Flashcards = ({ deck, onBack }) => {
     setTotalAnswered(0);
     setIsCorrect(null);
     setHasCheckedAnswer(false);
+    setCardAnswerStates({}); // Reset all card answer states
     const firstCard = flashcards[0];
     setTimeRemaining(firstCard.timer);
     setTimerActive(true);
+  };
+
+  const recordStudySession = async () => {
+    try {
+      if (deck && deck.deckId) {
+        const today = new Date().toISOString().split('T')[0];
+        const progressData = {
+          userId: 1, // Placeholder - you may want to get this from auth
+          cardId: 1, // Placeholder - not used for deck tracking
+          deckId: deck.deckId,
+          status: 'Studied',
+          date: today
+        };
+        
+        const response = await fetch('http://localhost:8080/api/progress/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(progressData)
+        });
+        
+        if (response.ok) {
+          console.log('Study session recorded successfully');
+        }
+      }
+      
+      // Update the onBack callback to refresh deck info with new study status
+      if (onBack) {
+        onBack();
+      }
+    } catch (error) {
+      console.error('Error recording study session:', error);
+      // Still navigate back even if recording fails
+      if (onBack) {
+        onBack();
+      }
+    }
   };
 
   // Timer effect
@@ -125,11 +280,17 @@ const Flashcards = ({ deck, onBack }) => {
       const nextCard = flashcards[currentCardIndex + 1];
       setCurrentCardIndex(currentCardIndex + 1);
       setIsFlipped(false);
-      setShowAnswer(false);
+      setShowAnswer(false); // Always hide answer for new card
       setUserAnswer('');
       setSelectedOption(null);
       setIsCorrect(null);
       setHasCheckedAnswer(false);
+      // Remove this card's answer state so it shows fresh options
+      setCardAnswerStates(prev => {
+        const newState = { ...prev };
+        delete newState[currentCardIndex + 1];
+        return newState;
+      });
       setTimeRemaining(nextCard.timer);
       setTimerActive(true);
     } else {
@@ -137,6 +298,9 @@ const Flashcards = ({ deck, onBack }) => {
       setTimerActive(false);
       const percentage = ((score / flashcards.length) * 100).toFixed(0);
       alert(`Great job! You've completed all cards!\n\nFinal Score: ${score}/${flashcards.length} (${percentage}%)`);
+      
+      // Record study session completion
+      recordStudySession();
     }
   };
 
@@ -145,11 +309,17 @@ const Flashcards = ({ deck, onBack }) => {
       const prevCard = flashcards[currentCardIndex - 1];
       setCurrentCardIndex(currentCardIndex - 1);
       setIsFlipped(false);
-      setShowAnswer(false);
+      setShowAnswer(false); // Always hide answer for previous card
       setUserAnswer('');
       setSelectedOption(null);
       setIsCorrect(null);
       setHasCheckedAnswer(false);
+      // Remove this card's answer state so it shows fresh options
+      setCardAnswerStates(prev => {
+        const newState = { ...prev };
+        delete newState[currentCardIndex - 1];
+        return newState;
+      });
       setTimeRemaining(prevCard.timer);
       setTimerActive(true);
     }
@@ -368,8 +538,22 @@ const Flashcards = ({ deck, onBack }) => {
                   </div>
                 )}
 
-                <div className="answer-label">Correct Answer:</div>
-                <div className="answer-text">{currentCard.back}</div>
+                {currentCard.type === 'multiple-choice' && (
+                  <div className="answer-section-multiple-choice">
+                    <div className="answer-label">Correct Answer:</div>
+                    <div className="correct-answer-option">
+                      <div className="option-text correct-highlight">{currentCard.back}</div>
+                      <span className="correct-badge">✓ Correct</span>
+                    </div>
+                  </div>
+                )}
+
+                {currentCard.type !== 'multiple-choice' && (
+                  <>
+                    <div className="answer-label">Correct Answer:</div>
+                    <div className="answer-text">{currentCard.back}</div>
+                  </>
+                )}
                 
                 {userAnswer && currentCard.type !== 'multiple-choice' && (
                   <div className="user-answer-section">
@@ -381,7 +565,9 @@ const Flashcards = ({ deck, onBack }) => {
                 {selectedOption !== null && currentCard.type === 'multiple-choice' && (
                   <div className="user-answer-section">
                     <div className="answer-label">Your Answer:</div>
-                    <div className="user-answer-text">{currentCard.options[selectedOption]}</div>
+                    <div className={`user-answer-text ${selectedOption !== null && currentCard.options[selectedOption].trim().toLowerCase() === currentCard.back.trim().toLowerCase() ? 'correct-answer' : 'incorrect-answer'}`}>
+                      {currentCard.options[selectedOption]}
+                    </div>
                   </div>
                 )}
               </div>
@@ -563,9 +749,6 @@ const Flashcards = ({ deck, onBack }) => {
                   onChange={(e) => setNewCard({ ...newCard, type: e.target.value })}
                 >
                   <option value="multiple-choice">Multiple Choice</option>
-                  <option value="fill-blank">Fill in the Blank</option>
-                  <option value="short-answer">Short Answer</option>
-                  <option value="long-answer">Long Answer</option>
                 </select>
               </div>
 
@@ -593,31 +776,31 @@ const Flashcards = ({ deck, onBack }) => {
                 />
               </div>
 
-              <div className="form-group">
-                <label>Back (Correct Answer)</label>
-                <textarea
-                  placeholder="Enter the correct answer..."
-                  value={newCard.back}
-                  onChange={(e) => setNewCard({ ...newCard, back: e.target.value })}
-                  rows="4"
-                  required
-                />
-              </div>
-
               {newCard.type === 'multiple-choice' && (
                 <div className="form-group">
                   <label>Multiple Choice Options</label>
-                  <small className="helper-text">Include the correct answer as one of the options</small>
-                  {newCard.options.map((option, index) => (
-                    <input
-                      key={index}
-                      type="text"
-                      placeholder={`Option ${index + 1}`}
-                      value={option}
-                      onChange={(e) => handleOptionChange({ index, text: e.target.value })}
-                      className="option-input"
-                    />
-                  ))}
+                  <small className="helper-text">Select the radio button to mark the correct answer</small>
+                  <div className="options-container">
+                    {newCard.options.map((option, index) => (
+                      <div key={index} className="option-input-group">
+                        <input
+                          type="text"
+                          placeholder={`Option ${index + 1}`}
+                          value={option}
+                          onChange={(e) => handleOptionChange({ index, text: e.target.value })}
+                          className="option-input"
+                        />
+                        <label className="radio-wrapper">
+                          <input
+                            type="radio"
+                            name="correct-answer"
+                            checked={newCard.correctAnswerIndex === index}
+                            onChange={() => setNewCard({ ...newCard, correctAnswerIndex: index })}
+                          />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                   <button
                     type="button"
                     className="add-option-btn"
