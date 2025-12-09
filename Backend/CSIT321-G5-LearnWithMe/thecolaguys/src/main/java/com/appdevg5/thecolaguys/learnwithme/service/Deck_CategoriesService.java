@@ -40,4 +40,24 @@ public class Deck_CategoriesService {
     public boolean exists(Long deckId, Long categoryId) {
         return deck_categoriesRepository.existsByDeckIdAndCategoryId(deckId, categoryId);
     }
+
+    @Transactional
+    public void linkDecksToCategory(Long categoryId, String categoryName, String description, List<Long> deckIds) {
+        System.out.println("[Deck_CategoriesService] Linking " + deckIds.size() + " decks to category " + categoryId + " with details");
+        
+        // First delete existing links for this category
+        System.out.println("[Deck_CategoriesService] Deleting existing links for category " + categoryId);
+        List<Deck_CategoriesEntity> existing = deck_categoriesRepository.findByCategoryId(categoryId);
+        for (Deck_CategoriesEntity entity : existing) {
+            deck_categoriesRepository.deleteByDeckIdAndCategoryId(entity.getDeckId(), categoryId);
+        }
+        
+        // Then create new links with category details
+        for (Long deckId : deckIds) {
+            Deck_CategoriesEntity link = new Deck_CategoriesEntity(deckId, categoryId, categoryName, description);
+            deck_categoriesRepository.save(link);
+            System.out.println("[Deck_CategoriesService] Linked deck " + deckId + " to category " + categoryId + " (" + categoryName + ")");
+        }
+        System.out.println("[Deck_CategoriesService] Successfully linked all decks to category " + categoryId + " with details");
+    }
 }
