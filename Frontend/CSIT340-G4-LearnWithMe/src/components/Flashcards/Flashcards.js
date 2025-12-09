@@ -215,26 +215,28 @@ const Flashcards = ({ deck, onBack }) => {
 
   const recordStudySession = async () => {
     try {
-      if (deck && deck.deckId) {
-        const today = new Date().toISOString().split('T')[0];
-        const progressData = {
+      if (deck && deck.deckId && totalAnswered > 0) {
+        // Send aggregated deck study session with correct and total answers
+        const sessionData = {
           userId: 1, // Placeholder - you may want to get this from auth
-          cardId: 1, // Placeholder - not used for deck tracking
           deckId: deck.deckId,
-          status: 'Studied',
-          date: today
+          correctAnswers: score,
+          totalAnswers: totalAnswered
         };
         
-        const response = await fetch('http://localhost:8080/api/progress/add', {
+        const response = await fetch('http://localhost:8080/api/progress/answer', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(progressData)
+          body: JSON.stringify(sessionData)
         });
         
         if (response.ok) {
-          console.log('Study session recorded successfully');
+          const result = await response.json();
+          console.log(`[Flashcards] Study session recorded - Deck: ${deck.title}, Score: ${score}/${totalAnswered}, Accuracy: ${result.accuracy}%`);
+        } else {
+          console.error('Failed to record study session:', response.status);
         }
       }
       
