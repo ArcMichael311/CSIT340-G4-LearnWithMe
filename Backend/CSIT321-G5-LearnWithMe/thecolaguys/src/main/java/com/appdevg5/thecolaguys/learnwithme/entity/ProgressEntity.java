@@ -20,28 +20,31 @@ public class ProgressEntity {
 	@Column(name = "user_id", nullable = false)
 	private Long userId;
 
-	@Column(name = "card_id", nullable = false)
-	private Long cardId;
-
 	@Column(name = "deck_id", nullable = false)
 	private Long deckId;
 
-	@Column(nullable = false)
-	private String status;
+	@Column(name = "correct_answers", nullable = false)
+	private Long correctAnswers;
 
-	@Column(name = "date")
-	private LocalDate date;
+	@Column(name = "total_answers", nullable = false)
+	private Long totalAnswers;
+
+	@Column(name = "accuracy", nullable = false)
+	private Integer accuracy; // percentage 0-100
+
+	@Column(name = "study_date", nullable = false)
+	private LocalDate studyDate;
 
 	public ProgressEntity() {
 	}
 
-	public ProgressEntity(Long progressId, Long userId, Long cardId, Long deckId, String status, LocalDate date) {
-		this.progressId = progressId;
+	public ProgressEntity(Long userId, Long deckId, Long correctAnswers, Long totalAnswers, Integer accuracy, LocalDate studyDate) {
 		this.userId = userId;
-		this.cardId = cardId;
 		this.deckId = deckId;
-		this.status = status;
-		this.date = date;
+		this.correctAnswers = correctAnswers;
+		this.totalAnswers = totalAnswers;
+		this.accuracy = accuracy;
+		this.studyDate = studyDate;
 	}
 
 	public Long getProgressId() {
@@ -60,14 +63,6 @@ public class ProgressEntity {
 		this.userId = userId;
 	}
 
-	public Long getCardId() {
-		return cardId;
-	}
-
-	public void setCardId(Long cardId) {
-		this.cardId = cardId;
-	}
-
 	public Long getDeckId() {
 		return deckId;
 	}
@@ -76,19 +71,36 @@ public class ProgressEntity {
 		this.deckId = deckId;
 	}
 
-	public String getStatus() {
-		return status;
+	public Long getCorrectAnswers() {
+		return correctAnswers;
 	}
 
-	public void setStatus(String status) {
-		this.status = status;
+	public void setCorrectAnswers(Long correctAnswers) {
+		this.correctAnswers = correctAnswers;
 	}
 
-	public LocalDate getDate() {
-		return date;
+	public Long getTotalAnswers() {
+		return totalAnswers;
 	}
 
-	public void setDate(LocalDate date) {
-		this.date = date;
+	public void setTotalAnswers(Long totalAnswers) {
+		this.totalAnswers = totalAnswers;
+	}
+
+	public Integer getAccuracy() {
+		return accuracy;
+	}
+
+	public void setAccuracy(Integer accuracy) {
+		this.accuracy = accuracy;
+	}
+
+	public LocalDate getStudyDate() {
+		return studyDate;
+	}
+
+	public void setStudyDate(LocalDate studyDate) {
+		this.studyDate = studyDate;
 	}
 }
+
