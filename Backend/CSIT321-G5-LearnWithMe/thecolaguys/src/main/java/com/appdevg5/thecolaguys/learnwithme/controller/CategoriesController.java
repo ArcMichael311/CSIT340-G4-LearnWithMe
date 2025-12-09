@@ -4,6 +4,7 @@ import com.appdevg5.thecolaguys.learnwithme.entity.CategoriesEntity;
 import com.appdevg5.thecolaguys.learnwithme.entity.DecksEntity;
 import com.appdevg5.thecolaguys.learnwithme.service.CategoriesService;
 import com.appdevg5.thecolaguys.learnwithme.service.CategoryDeckService;
+import com.appdevg5.thecolaguys.learnwithme.service.Deck_CategoriesService;
 import com.appdevg5.thecolaguys.learnwithme.service.DecksService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,23 +20,45 @@ public class CategoriesController {
 
     private final CategoriesService categoriesService;
     private final CategoryDeckService categoryDeckService;
+    private final Deck_CategoriesService deck_categoriesService;
     private final DecksService decksService;
 
-    public CategoriesController(CategoriesService categoriesService, CategoryDeckService categoryDeckService, DecksService decksService) {
+    public CategoriesController(CategoriesService categoriesService, CategoryDeckService categoryDeckService, Deck_CategoriesService deck_categoriesService, DecksService decksService) {
         this.categoriesService = categoriesService;
         this.categoryDeckService = categoryDeckService;
+        this.deck_categoriesService = deck_categoriesService;
         this.decksService = decksService;
     }
 
     @PostMapping("/add")
     public ResponseEntity<CategoriesEntity> create(@RequestBody CategoriesEntity c) {
-        CategoriesEntity created = categoriesService.create(c);
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
+        try {
+            System.out.println("Creating category: " + c.getName());
+            System.out.println("Category data - name: " + c.getName() + ", description: " + c.getDescription() + ", color: " + c.getColor());
+            CategoriesEntity created = categoriesService.create(c);
+            System.out.println("Successfully created category with ID: " + created.getCategoryId());
+            return new ResponseEntity<>(created, HttpStatus.CREATED);
+        } catch (Exception e) {
+            System.err.println("Error creating category: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping
     public ResponseEntity<List<CategoriesEntity>> getAll() {
-        return ResponseEntity.ok(categoriesService.getAll());
+        try {
+            List<CategoriesEntity> categories = categoriesService.getAll();
+            System.out.println("Fetching all categories. Count: " + categories.size());
+            for (CategoriesEntity cat : categories) {
+                System.out.println("  - ID: " + cat.getCategoryId() + ", Name: " + cat.getName());
+            }
+            return ResponseEntity.ok(categories);
+        } catch (Exception e) {
+            System.err.println("Error fetching categories: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping("/get/{id}")
@@ -80,7 +103,14 @@ public class CategoriesController {
             }
             System.out.println("Deck IDs: " + deckIds);
             
-            categoryDeckService.linkDecksToCategory(categoryId, deckIds);
+            // Get category details to store in the link
+            var categoryOpt = categoriesService.getById(categoryId);
+            if (categoryOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            
+            CategoriesEntity category = categoryOpt.get();
+            deck_categoriesService.linkDecksToCategory(categoryId, category.getName(), category.getDescription(), deckIds);
             System.out.println("Successfully linked decks");
             return ResponseEntity.ok().build();
         } catch (Exception e) {
@@ -95,7 +125,7 @@ public class CategoriesController {
         try {
             System.out.println("Fetching linked decks for category: " + categoryId);
             
-            List<Long> deckIds = categoryDeckService.getByCategoryId(categoryId)
+            List<Long> deckIds = deck_categoriesService.getByCategoryId(categoryId)
                     .stream()
                     .map(link -> link.getDeckId())
                     .toList();
