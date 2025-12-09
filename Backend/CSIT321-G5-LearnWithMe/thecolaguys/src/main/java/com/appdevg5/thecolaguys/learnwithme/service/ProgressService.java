@@ -32,21 +32,22 @@ public class ProgressService {
 		return progressRepository.findByUserId(userId);
 	}
 
-	public List<ProgressEntity> getByCardId(Long cardId) {
-		return progressRepository.findByCardId(cardId);
-	}
-
 	public List<ProgressEntity> getByDeckId(Long deckId) {
 		return progressRepository.findByDeckId(deckId);
+	}
+
+	public Optional<ProgressEntity> getByUserIdAndDeckId(Long userId, Long deckId) {
+		return progressRepository.findByUserIdAndDeckId(userId, deckId);
 	}
 
 	public Optional<ProgressEntity> update(Long id, ProgressEntity updated) {
 		return progressRepository.findById(id).map(existing -> {
 			existing.setUserId(updated.getUserId());
-			existing.setCardId(updated.getCardId());
 			existing.setDeckId(updated.getDeckId());
-			existing.setStatus(updated.getStatus());
-			existing.setDate(updated.getDate());
+			existing.setCorrectAnswers(updated.getCorrectAnswers());
+			existing.setTotalAnswers(updated.getTotalAnswers());
+			existing.setAccuracy(updated.getAccuracy());
+			existing.setStudyDate(updated.getStudyDate());
 			return progressRepository.save(existing);
 		});
 	}
@@ -59,3 +60,4 @@ public class ProgressService {
 	}
 
 }
+
