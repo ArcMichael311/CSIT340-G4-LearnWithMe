@@ -17,7 +17,10 @@ public class CategoriesService {
 	}
 
 	public CategoriesEntity create(CategoriesEntity c) {
-		return categoriesRepository.save(c);
+		System.out.println("[CategoriesService] Saving category to database: " + c.getName());
+		CategoriesEntity saved = categoriesRepository.save(c);
+		System.out.println("[CategoriesService] Category saved with ID: " + saved.getCategoryId());
+		return saved;
 	}
 
 	public List<CategoriesEntity> getAll() {
