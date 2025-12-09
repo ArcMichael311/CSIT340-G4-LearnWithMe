@@ -110,8 +110,10 @@ public class CategoriesController {
             }
             
             CategoriesEntity category = categoryOpt.get();
+            // Link to both deck_categories and category_deck tables
             deck_categoriesService.linkDecksToCategory(categoryId, category.getName(), category.getDescription(), deckIds);
-            System.out.println("Successfully linked decks");
+            categoryDeckService.linkDecksToCategoryWithDetails(categoryId, category.getName(), category.getDescription(), deckIds);
+            System.out.println("Successfully linked decks to both tables");
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             System.err.println("Error linking decks: " + e.getMessage());
