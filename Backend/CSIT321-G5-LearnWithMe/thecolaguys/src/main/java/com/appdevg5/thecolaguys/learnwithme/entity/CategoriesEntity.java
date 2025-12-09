@@ -22,13 +22,17 @@ public class CategoriesEntity {
 	@Column(length = 1000)
 	private String description;
 
+	@Column(name = "color", nullable = true)
+	private String color;
+
 	public CategoriesEntity() {
 	}
 
-	public CategoriesEntity(Long categoryId, String name, String description) {
+	public CategoriesEntity(Long categoryId, String name, String description, String color) {
 		this.categoryId = categoryId;
 		this.name = name;
 		this.description = description;
+		this.color = color;
 	}
 
 	public Long getCategoryId() {
@@ -53,6 +57,14 @@ public class CategoriesEntity {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public String getColor() {
+		return color;
+	}
+
+	public void setColor(String color) {
+		this.color = color;
 	}
 }
 
