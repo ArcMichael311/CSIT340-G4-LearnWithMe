@@ -38,13 +38,35 @@ public class CategoryDeckService {
 
 	@Transactional
 	public void linkDecksToCategory(Long categoryId, List<Long> deckIds) {
+		System.out.println("[CategoryDeckService] Linking " + deckIds.size() + " decks to category " + categoryId);
+		
 		// First delete existing links for this category
+		System.out.println("[CategoryDeckService] Deleting existing links for category " + categoryId);
 		categoryDeckRepository.deleteByCategoryId(categoryId);
 		
 		// Then create new links
 		for (Long deckId : deckIds) {
-			CategoryDeckEntity link = new CategoryDeckEntity(categoryId, deckId);
+			CategoryDeckEntity link = new CategoryDeckEntity(categoryId, null, null, deckId);
 			categoryDeckRepository.save(link);
+			System.out.println("[CategoryDeckService] Linked deck " + deckId + " to category " + categoryId);
 		}
+		System.out.println("[CategoryDeckService] Successfully linked all decks to category " + categoryId);
+	}
+
+	@Transactional
+	public void linkDecksToCategoryWithDetails(Long categoryId, String categoryName, String description, List<Long> deckIds) {
+		System.out.println("[CategoryDeckService] Linking " + deckIds.size() + " decks to category " + categoryId + " with details");
+		
+		// First delete existing links for this category
+		System.out.println("[CategoryDeckService] Deleting existing links for category " + categoryId);
+		categoryDeckRepository.deleteByCategoryId(categoryId);
+		
+		// Then create new links with category details
+		for (Long deckId : deckIds) {
+			CategoryDeckEntity link = new CategoryDeckEntity(categoryId, categoryName, description, deckId);
+			categoryDeckRepository.save(link);
+			System.out.println("[CategoryDeckService] Linked deck " + deckId + " to category " + categoryId + " (" + categoryName + ")");
+		}
+		System.out.println("[CategoryDeckService] Successfully linked all decks to category " + categoryId + " with details");
 	}
 }
