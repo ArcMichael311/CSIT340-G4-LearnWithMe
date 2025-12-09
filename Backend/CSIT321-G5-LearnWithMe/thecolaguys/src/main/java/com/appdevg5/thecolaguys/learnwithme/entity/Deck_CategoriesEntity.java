@@ -15,6 +15,12 @@ public class Deck_CategoriesEntity {
     @Column(name = "category_id")
     private Long categoryId;
 
+    @Column(name = "category_name", nullable = false, length = 255)
+    private String categoryName;
+
+    @Column(name = "description", length = 1000)
+    private String description;
+
     @ManyToOne
     @JoinColumn(name = "deck_id", insertable = false, updatable = false)
     private DecksEntity deck;
@@ -31,6 +37,13 @@ public class Deck_CategoriesEntity {
         this.categoryId = categoryId;
     }
 
+    public Deck_CategoriesEntity(Long deckId, Long categoryId, String categoryName, String description) {
+        this.deckId = deckId;
+        this.categoryId = categoryId;
+        this.categoryName = categoryName;
+        this.description = description;
+    }
+
     public Long getDeckId() {
         return deckId;
     }
@@ -45,6 +58,22 @@ public class Deck_CategoriesEntity {
 
     public void setCategoryId(Long categoryId) {
         this.categoryId = categoryId;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public DecksEntity getDeck() {
