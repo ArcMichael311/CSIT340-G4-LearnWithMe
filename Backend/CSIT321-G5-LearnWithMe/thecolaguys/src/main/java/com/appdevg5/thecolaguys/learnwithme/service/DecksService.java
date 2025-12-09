@@ -4,6 +4,7 @@ import com.appdevg5.thecolaguys.learnwithme.entity.DecksEntity;
 import com.appdevg5.thecolaguys.learnwithme.repository.DecksRepository;
 import com.appdevg5.thecolaguys.learnwithme.repository.FlashcardsRepository;
 import com.appdevg5.thecolaguys.learnwithme.repository.Deck_CategoriesRepository;
+import com.appdevg5.thecolaguys.learnwithme.repository.CategoryDeckRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,11 +17,13 @@ public class DecksService {
 	private final DecksRepository decksRepository;
 	private final FlashcardsRepository flashcardsRepository;
 	private final Deck_CategoriesRepository deck_categoriesRepository;
+	private final CategoryDeckRepository categoryDeckRepository;
 
-	public DecksService(DecksRepository decksRepository, FlashcardsRepository flashcardsRepository, Deck_CategoriesRepository deck_categoriesRepository) {
+	public DecksService(DecksRepository decksRepository, FlashcardsRepository flashcardsRepository, Deck_CategoriesRepository deck_categoriesRepository, CategoryDeckRepository categoryDeckRepository) {
 		this.decksRepository = decksRepository;
 		this.flashcardsRepository = flashcardsRepository;
 		this.deck_categoriesRepository = deck_categoriesRepository;
+		this.categoryDeckRepository = categoryDeckRepository;
 	}
 
 	public List<DecksEntity> findAll() {
@@ -46,12 +49,18 @@ public class DecksService {
 
 	@Transactional
 	public void deleteById(Long id) {
+		System.out.println("[DecksService] Deleting deck: " + id);
 		// Delete all flashcards associated with this deck first
 		flashcardsRepository.deleteByDeckId(id);
-		// Delete all deck-category links for this deck
+		System.out.println("[DecksService] Deleted flashcards for deck: " + id);
+		// Delete all deck-category links for this deck from both tables
 		deck_categoriesRepository.deleteByDeckId(id);
+		System.out.println("[DecksService] Deleted deck_categories links for deck: " + id);
+		categoryDeckRepository.deleteByDeckId(id);
+		System.out.println("[DecksService] Deleted category_deck links for deck: " + id);
 		// Then delete the deck
 		decksRepository.deleteById(id);
+		System.out.println("[DecksService] Successfully deleted deck: " + id);
 	}
 }
 
