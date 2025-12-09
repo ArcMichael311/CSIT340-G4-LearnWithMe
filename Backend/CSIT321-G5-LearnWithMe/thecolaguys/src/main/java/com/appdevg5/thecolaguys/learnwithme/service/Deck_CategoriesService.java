@@ -37,6 +37,12 @@ public class Deck_CategoriesService {
         deck_categoriesRepository.deleteByDeckIdAndCategoryId(deckId, categoryId);
     }
 
+    @Transactional
+    public void deleteByDeckId(Long deckId) {
+        System.out.println("[Deck_CategoriesService] Deleting all links for deck " + deckId);
+        deck_categoriesRepository.deleteByDeckId(deckId);
+    }
+
     public boolean exists(Long deckId, Long categoryId) {
         return deck_categoriesRepository.existsByDeckIdAndCategoryId(deckId, categoryId);
     }
