@@ -3,6 +3,7 @@ package com.appdevg5.thecolaguys.learnwithme.service;
 import com.appdevg5.thecolaguys.learnwithme.entity.DecksEntity;
 import com.appdevg5.thecolaguys.learnwithme.repository.DecksRepository;
 import com.appdevg5.thecolaguys.learnwithme.repository.FlashcardsRepository;
+import com.appdevg5.thecolaguys.learnwithme.repository.Deck_CategoriesRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,10 +15,12 @@ public class DecksService {
 
 	private final DecksRepository decksRepository;
 	private final FlashcardsRepository flashcardsRepository;
+	private final Deck_CategoriesRepository deck_categoriesRepository;
 
-	public DecksService(DecksRepository decksRepository, FlashcardsRepository flashcardsRepository) {
+	public DecksService(DecksRepository decksRepository, FlashcardsRepository flashcardsRepository, Deck_CategoriesRepository deck_categoriesRepository) {
 		this.decksRepository = decksRepository;
 		this.flashcardsRepository = flashcardsRepository;
+		this.deck_categoriesRepository = deck_categoriesRepository;
 	}
 
 	public List<DecksEntity> findAll() {
@@ -45,6 +48,8 @@ public class DecksService {
 	public void deleteById(Long id) {
 		// Delete all flashcards associated with this deck first
 		flashcardsRepository.deleteByDeckId(id);
+		// Delete all deck-category links for this deck
+		deck_categoriesRepository.deleteByDeckId(id);
 		// Then delete the deck
 		decksRepository.deleteById(id);
 	}
