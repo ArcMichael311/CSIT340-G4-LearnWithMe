@@ -422,6 +422,43 @@
   font-weight: 600;
 }
 
+.deck-item-view {
+  padding: 1rem;
+  border-bottom: 1px solid #353535;
+  background: rgba(242, 183, 5, 0.05);
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.deck-item-view:hover {
+  background: rgba(242, 183, 5, 0.1);
+  border-left: 3px solid #f2b705;
+  padding-left: calc(1rem - 3px);
+}
+
+.deck-item-view:last-child {
+  border-bottom: none;
+}
+
+.deck-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.deck-info .deck-name {
+  color: #f2f2f2;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.deck-info .deck-description {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .categories-grid {
