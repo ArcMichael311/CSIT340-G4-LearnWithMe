@@ -25,5 +25,10 @@ public interface Deck_CategoriesRepository extends JpaRepository<Deck_Categories
     @Transactional
     @Query("DELETE FROM Deck_CategoriesEntity d WHERE d.deckId = :deckId")
     void deleteByDeckId(Long deckId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Deck_CategoriesEntity d WHERE d.categoryId = :categoryId")
+    void deleteByCategoryId(Long categoryId);
 }
 
