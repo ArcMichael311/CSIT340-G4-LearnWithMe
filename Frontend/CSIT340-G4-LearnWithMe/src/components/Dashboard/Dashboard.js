@@ -4,11 +4,13 @@ import './Dashboard.css';
 import Decks from '../Decks/Decks';
 import Progress from '../Progress/Progress';
 import Categories from '../Categories/Categories';
+import Modal from '../Modal/Modal';
 
 const Dashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedDeck, setSelectedDeck] = useState(null);
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info', showCancel: false, onConfirm: null });
 
   const handleDeckSelect = (deck) => {
     setSelectedDeck(deck);
@@ -18,6 +20,17 @@ const Dashboard = ({ user, onLogout }) => {
   const handleBackToDecks = () => {
     setSelectedDeck(null);
     navigate('/dashboard/decks');
+  };
+
+  const handleLogout = () => {
+    setModal({
+      isOpen: true,
+      title: 'Logout',
+      message: 'Are you sure you want to logout?',
+      type: 'warning',
+      showCancel: true,
+      onConfirm: onLogout
+    });
   };
 
   const isActive = (path) => {
@@ -84,7 +97,7 @@ const Dashboard = ({ user, onLogout }) => {
               <div className="user-email">{user?.email || 'user@example.com'}</div>
             </div>
           </div>
-          <button className="logout-btn" onClick={onLogout}>
+          <button className="logout-btn" onClick={handleLogout}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
             </svg>
@@ -129,6 +142,16 @@ const Dashboard = ({ user, onLogout }) => {
           />
         </Routes>
       </main>
+
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 };

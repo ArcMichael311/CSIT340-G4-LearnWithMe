@@ -28,6 +28,9 @@ public class FlashcardsEntity {
 	@Column(name = "options", columnDefinition = "JSON", nullable = true)
 	private String options;
 
+	@Column(name = "timer", nullable = false)
+	private Integer timer = 30; // Default 30 seconds
+
 	public FlashcardsEntity() {
 	}
 
@@ -77,5 +80,13 @@ public class FlashcardsEntity {
 
 	public void setOptions(String options) {
 		this.options = options;
+	}
+
+	public Integer getTimer() {
+		return timer;
+	}
+
+	public void setTimer(Integer timer) {
+		this.timer = timer;
 	}
 }

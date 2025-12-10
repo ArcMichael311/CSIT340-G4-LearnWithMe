@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Register.css';
+import Modal from '../Modal/Modal';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info', showCancel: false, onConfirm: null });
 
   const handleChange = (e) => {
     setFormData({
@@ -25,12 +27,12 @@ const Register = () => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
+      setModal({ isOpen: true, title: 'Validation Error', message: "Passwords don't match!", type: 'warning', showCancel: false, onConfirm: null });
       return;
     }
     
     if (!agreeTerms) {
-      alert("Please agree to the Terms and Conditions");
+      setModal({ isOpen: true, title: 'Validation Error', message: "Please agree to the Terms and Conditions", type: 'warning', showCancel: false, onConfirm: null });
       return;
     }
     
@@ -50,15 +52,21 @@ const Register = () => {
       if (response.ok) {
         const user = await response.json();
         console.log('Registration successful:', user);
-        alert('Account created successfully! Please login.');
-        navigate('/login');
+        setModal({ 
+          isOpen: true, 
+          title: 'Success!', 
+          message: 'Account created successfully! Please login.', 
+          type: 'success', 
+          showCancel: false, 
+          onConfirm: () => navigate('/login')
+        });
       } else {
         const error = await response.text();
-        alert('Registration failed: ' + error);
+        setModal({ isOpen: true, title: 'Registration Failed', message: 'Registration failed: ' + error, type: 'error', showCancel: false, onConfirm: null });
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to connect to server. Please try again.');
+      setModal({ isOpen: true, title: 'Connection Error', message: 'Failed to connect to server. Please try again.', type: 'error', showCancel: false, onConfirm: null });
     }
   };
 
@@ -236,6 +244,16 @@ const Register = () => {
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 };

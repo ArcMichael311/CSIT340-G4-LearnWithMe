@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
+import Modal from '../Modal/Modal';
 
 const Login = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ const Login = ({ onLogin }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info', showCancel: false, onConfirm: null });
 
   const handleChange = (e) => {
     setFormData({
@@ -47,11 +49,11 @@ const Login = ({ onLogin }) => {
         navigate('/dashboard');
       } else {
         const error = await response.text();
-        alert('Login failed: ' + error);
+        setModal({ isOpen: true, title: 'Login Failed', message: 'Login failed: ' + error, type: 'error', showCancel: false, onConfirm: null });
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to connect to server. Please try again.');
+      setModal({ isOpen: true, title: 'Connection Error', message: 'Failed to connect to server. Please try again.', type: 'error', showCancel: false, onConfirm: null });
     }
   };
 
@@ -161,6 +163,16 @@ const Login = ({ onLogin }) => {
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 };

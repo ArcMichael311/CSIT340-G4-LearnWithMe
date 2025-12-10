@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import './Flashcards.css';
+import Modal from '../Modal/Modal';
 
 const Flashcards = ({ deck, onBack }) => {
   const [flashcards, setFlashcards] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info', showCancel: false, onConfirm: null });
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingCard, setEditingCard] = useState(null);
   const [newCard, setNewCard] = useState({ 
     front: '', 
     back: '', 
@@ -65,7 +69,7 @@ const Flashcards = ({ deck, onBack }) => {
             front: card.question,
             back: card.answer,
             type: 'multiple-choice',
-            timer: 30,
+            timer: card.timer || 30, // Use timer from DB or default to 30
             options: options
           };
         });
@@ -107,11 +111,11 @@ const Flashcards = ({ deck, onBack }) => {
     if (newCard.type === 'multiple-choice') {
       const filledOptions = newCard.options.filter(opt => opt.trim() !== '');
       if (filledOptions.length < 2) {
-        alert('Please provide at least 2 options for multiple choice!');
+        setModal({ isOpen: true, title: 'Validation Error', message: 'Please provide at least 2 options for multiple choice!', type: 'warning', showCancel: false, onConfirm: null });
         return;
       }
       if (newCard.correctAnswerIndex === null || newCard.correctAnswerIndex === undefined) {
-        alert('Please select the correct answer!');
+        setModal({ isOpen: true, title: 'Validation Error', message: 'Please select the correct answer!', type: 'warning', showCancel: false, onConfirm: null });
         return;
       }
     }
@@ -123,7 +127,8 @@ const Flashcards = ({ deck, onBack }) => {
       question: newCard.front,
       answer: correctAnswer,
       deckId: deck.deckId,
-      options: JSON.stringify(filledOptions) // Store all options as JSON
+      options: JSON.stringify(filledOptions), // Store all options as JSON
+      timer: newCard.timer // Include timer value
     };
 
     try {
@@ -149,52 +154,136 @@ const Flashcards = ({ deck, onBack }) => {
         };
         setFlashcards([...flashcards, newFlashcard]);
         setShowCreateModal(false);
+        // Reset form but keep the timer setting
+        const currentTimer = newCard.timer;
         setNewCard({ 
           front: '', 
           back: '', 
           type: 'multiple-choice',
-          timer: 30,
+          timer: currentTimer, // Preserve user's timer preference
           options: ['', '', '', ''],
           correctAnswerIndex: 0
         });
       } else {
         console.error('Error creating card:', response.statusText);
-        alert('Failed to create flashcard. Please try again.');
+        setModal({ isOpen: true, title: 'Error', message: 'Failed to create flashcard. Please try again.', type: 'error', showCancel: false, onConfirm: null });
       }
     } catch (error) {
       console.error('Error creating card:', error);
-      alert('Error creating flashcard: ' + error.message);
+      setModal({ isOpen: true, title: 'Error', message: 'Error creating flashcard: ' + error.message, type: 'error', showCancel: false, onConfirm: null });
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteCard = async (id) => {
-    if (window.confirm('Are you sure you want to delete this card?')) {
-      try {
-        setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/delete/${id}`, {
-          method: 'DELETE'
-        });
+    setModal({
+      isOpen: true,
+      title: 'Delete Card',
+      message: 'Are you sure you want to delete this card?',
+      type: 'warning',
+      showCancel: true,
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          const response = await fetch(`${API_BASE_URL}/delete/${id}`, {
+            method: 'DELETE'
+          });
 
-        if (response.ok) {
-          setFlashcards(flashcards.filter(card => card.id !== id));
-        } else {
-          console.error('Error deleting card:', response.statusText);
-          alert('Failed to delete flashcard. Please try again.');
+          if (response.ok) {
+            setFlashcards(flashcards.filter(card => card.id !== id));
+          } else {
+            console.error('Error deleting card:', response.statusText);
+            setModal({ isOpen: true, title: 'Error', message: 'Failed to delete flashcard. Please try again.', type: 'error', showCancel: false, onConfirm: null });
+          }
+        } catch (error) {
+          console.error('Error deleting card:', error);
+          setModal({ isOpen: true, title: 'Error', message: 'Error deleting flashcard: ' + error.message, type: 'error', showCancel: false, onConfirm: null });
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error deleting card:', error);
-        alert('Error deleting flashcard: ' + error.message);
-      } finally {
-        setLoading(false);
       }
+    });
+  };
+
+  const handleEditCard = (card) => {
+    setEditingCard({
+      id: card.id,
+      front: card.front,
+      back: card.back,
+      type: card.type,
+      timer: card.timer,
+      options: card.options || ['', '', '', ''],
+      correctAnswerIndex: card.options ? card.options.findIndex(opt => opt === card.back) : 0
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateCard = async (e) => {
+    e.preventDefault();
+    
+    // Validate multiple choice options
+    if (editingCard.type === 'multiple-choice') {
+      const filledOptions = editingCard.options.filter(opt => opt.trim() !== '');
+      if (filledOptions.length < 2) {
+        setModal({ isOpen: true, title: 'Validation Error', message: 'Please provide at least 2 options for multiple choice!', type: 'warning', showCancel: false, onConfirm: null });
+        return;
+      }
+      if (editingCard.correctAnswerIndex === null || editingCard.correctAnswerIndex === undefined) {
+        setModal({ isOpen: true, title: 'Validation Error', message: 'Please select the correct answer!', type: 'warning', showCancel: false, onConfirm: null });
+        return;
+      }
+    }
+    
+    const correctAnswer = editingCard.options[editingCard.correctAnswerIndex];
+    const filledOptions = editingCard.options.filter(opt => opt.trim() !== '');
+    const cardToUpdate = {
+      cardId: editingCard.id,
+      question: editingCard.front,
+      answer: correctAnswer,
+      deckId: deck.deckId,
+      options: JSON.stringify(filledOptions),
+      timer: editingCard.timer
+    };
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/update/${editingCard.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(cardToUpdate)
+      });
+
+      if (response.ok) {
+        const updatedCard = await response.json();
+        const updatedFlashcard = {
+          id: updatedCard.cardId,
+          front: updatedCard.question,
+          back: updatedCard.answer,
+          type: 'multiple-choice',
+          timer: editingCard.timer,
+          options: editingCard.options.filter(opt => opt.trim() !== '')
+        };
+        setFlashcards(flashcards.map(c => c.id === editingCard.id ? updatedFlashcard : c));
+        setShowEditModal(false);
+        setEditingCard(null);
+      } else {
+        console.error('Error updating card:', response.statusText);
+        setModal({ isOpen: true, title: 'Error', message: 'Failed to update flashcard. Please try again.', type: 'error', showCancel: false, onConfirm: null });
+      }
+    } catch (error) {
+      console.error('Error updating card:', error);
+      setModal({ isOpen: true, title: 'Error', message: 'Error updating flashcard: ' + error.message, type: 'error', showCancel: false, onConfirm: null });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleStartStudy = () => {
     if (flashcards.length === 0) {
-      alert('Add some flashcards first!');
+      setModal({ isOpen: true, title: 'No Flashcards', message: 'Add some flashcards first!', type: 'warning', showCancel: false, onConfirm: null });
       return;
     }
     setStudyMode(true);
@@ -224,6 +313,8 @@ const Flashcards = ({ deck, onBack }) => {
           totalAnswers: totalAnswered
         };
         
+        console.log('[Flashcards] Sending study session data:', sessionData);
+        
         const response = await fetch('http://localhost:8080/api/progress/answer', {
           method: 'POST',
           headers: {
@@ -236,7 +327,8 @@ const Flashcards = ({ deck, onBack }) => {
           const result = await response.json();
           console.log(`[Flashcards] Study session recorded - Deck: ${deck.title}, Score: ${score}/${totalAnswered}, Accuracy: ${result.accuracy}%`);
         } else {
-          console.error('Failed to record study session:', response.status);
+          const errorText = await response.text();
+          console.error('Failed to record study session:', response.status, errorText);
         }
       }
       
@@ -299,10 +391,14 @@ const Flashcards = ({ deck, onBack }) => {
       setStudyMode(false);
       setTimerActive(false);
       const percentage = ((score / flashcards.length) * 100).toFixed(0);
-      alert(`Great job! You've completed all cards!\n\nFinal Score: ${score}/${flashcards.length} (${percentage}%)`);
-      
-      // Record study session completion
-      recordStudySession();
+      setModal({
+        isOpen: true,
+        title: 'Congratulations!',
+        message: `Great job! You've completed all cards!\n\nFinal Score: ${score}/${flashcards.length} (${percentage}%)`,
+        type: 'success',
+        showCancel: false,
+        onConfirm: () => recordStudySession()
+      });
     }
   };
 
@@ -545,7 +641,12 @@ const Flashcards = ({ deck, onBack }) => {
                     <div className="answer-label">Correct Answer:</div>
                     <div className="correct-answer-option">
                       <div className="option-text correct-highlight">{currentCard.back}</div>
-                      <span className="correct-badge">✓ Correct</span>
+                      <span className="correct-badge">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '4px', verticalAlign: 'middle'}}>
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                        </svg>
+                        Correct
+                      </span>
                     </div>
                   </div>
                 )}
@@ -710,18 +811,36 @@ const Flashcards = ({ deck, onBack }) => {
                 <div className="side-text">{card.back}</div>
               </div>
             </div>
-            <button 
-              className="delete-card-btn"
-              onClick={() => handleDeleteCard(card.id)}
-            >
-              🗑️ Delete
-            </button>
+            <div className="card-actions">
+              <button 
+                className="edit-card-btn"
+                onClick={() => handleEditCard(card)}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg>
+                Edit
+              </button>
+              <button 
+                className="delete-card-btn"
+                onClick={() => handleDeleteCard(card.id)}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+                Delete
+              </button>
+            </div>
           </div>
         ))}
 
         {flashcards.length === 0 && (
           <div className="empty-cards">
-            <div className="empty-icon">📇</div>
+            <div className="empty-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="64" height="64">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+              </svg>
+            </div>
             <h3>No flashcards yet</h3>
             <p>Create your first flashcard to start studying!</p>
             <button className="create-card-btn" onClick={() => setShowCreateModal(true)}>
@@ -829,6 +948,107 @@ const Flashcards = ({ deck, onBack }) => {
           </div>
         </div>
       )}
+
+      {/* Edit Card Modal */}
+      {showEditModal && editingCard && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit Flashcard</h2>
+              <button className="modal-close" onClick={() => setShowEditModal(false)}>
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateCard}>
+              <div className="form-group">
+                <label>Front (Question)</label>
+                <textarea
+                  placeholder="Enter your question"
+                  value={editingCard.front}
+                  onChange={(e) => setEditingCard({ ...editingCard, front: e.target.value })}
+                  required
+                  rows="3"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Timer (seconds)</label>
+                <input
+                  type="number"
+                  min="5"
+                  max="300"
+                  value={editingCard.timer}
+                  onChange={(e) => setEditingCard({ ...editingCard, timer: parseInt(e.target.value) })}
+                  required
+                />
+              </div>
+
+              {editingCard.type === 'multiple-choice' && (
+                <div className="form-group">
+                  <label>Multiple Choice Options</label>
+                  <small className="helper-text">Select the radio button to mark the correct answer</small>
+                  <div className="options-container">
+                    {editingCard.options.map((option, index) => (
+                      <div key={index} className="option-input-group">
+                        <input
+                          type="text"
+                          placeholder={`Option ${index + 1}`}
+                          value={option}
+                          onChange={(e) => {
+                            const newOptions = [...editingCard.options];
+                            newOptions[index] = e.target.value;
+                            setEditingCard({ ...editingCard, options: newOptions });
+                          }}
+                          className="option-input"
+                        />
+                        <label className="radio-wrapper">
+                          <input
+                            type="radio"
+                            name="correct-answer-edit"
+                            checked={editingCard.correctAnswerIndex === index}
+                            onChange={() => setEditingCard({ ...editingCard, correctAnswerIndex: index })}
+                          />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="add-option-btn"
+                    onClick={() => setEditingCard({ ...editingCard, options: [...editingCard.options, ''] })}
+                  >
+                    + Add Option
+                  </button>
+                </div>
+              )}
+
+              <div className="modal-actions">
+                <button 
+                  type="button" 
+                  className="btn-cancel"
+                  onClick={() => setShowEditModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-create">
+                  Update Card
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 };
