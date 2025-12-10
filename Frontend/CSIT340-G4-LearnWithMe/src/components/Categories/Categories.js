@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Categories.css';
+import Modal from '../Modal/Modal';
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
@@ -11,6 +12,7 @@ const Categories = () => {
   const [availableDecks, setAvailableDecks] = useState([]);
   const [linkedDecks, setLinkedDecks] = useState([]);
   const [viewLinkedDecks, setViewLinkedDecks] = useState([]);
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info', showCancel: false, onConfirm: null });
   const [newCategory, setNewCategory] = useState({
     name: '',
     description: '',
@@ -90,41 +92,48 @@ const Categories = () => {
         setCategories([...categories, createdCategory]);
         setShowCreateModal(false);
         setNewCategory({ name: '', description: '', color: '#667eea' });
-        alert('Category created successfully!');
+        setModal({ isOpen: true, title: 'Success', message: 'Category created successfully!', type: 'success', showCancel: false, onConfirm: null });
       } else {
         console.error('Response status:', response.status);
         const errorText = await response.text();
         console.error('Error response:', errorText);
-        alert('Failed to create category. Status: ' + response.status);
+        setModal({ isOpen: true, title: 'Error', message: 'Failed to create category. Status: ' + response.status, type: 'error', showCancel: false, onConfirm: null });
       }
     } catch (error) {
       console.error('Error creating category:', error);
-      alert('Error creating category: ' + error.message);
+      setModal({ isOpen: true, title: 'Error', message: 'Error creating category: ' + error.message, type: 'error', showCancel: false, onConfirm: null });
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteCategory = async (id) => {
-    if (window.confirm('Are you sure you want to delete this category? This will not delete the decks.')) {
-      try {
-        setLoading(true);
-        const response = await fetch(`${CATEGORIES_API}/delete/${id}`, {
-          method: 'DELETE'
-        });
+    setModal({
+      isOpen: true,
+      title: 'Delete Category',
+      message: 'Are you sure you want to delete this category? This will not delete the decks.',
+      type: 'warning',
+      showCancel: true,
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          const response = await fetch(`${CATEGORIES_API}/delete/${id}`, {
+            method: 'DELETE'
+          });
 
-        if (response.ok) {
-          setCategories(categories.filter(category => category.categoryId !== id));
-        } else {
-          alert('Failed to delete category. Please try again.');
+          if (response.ok) {
+            setCategories(categories.filter(category => category.categoryId !== id));
+          } else {
+            setModal({ isOpen: true, title: 'Error', message: 'Failed to delete category. Please try again.', type: 'error', showCancel: false, onConfirm: null });
+          }
+        } catch (error) {
+          console.error('Error deleting category:', error);
+          setModal({ isOpen: true, title: 'Error', message: 'Error deleting category: ' + error.message, type: 'error', showCancel: false, onConfirm: null });
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error deleting category:', error);
-        alert('Error deleting category: ' + error.message);
-      } finally {
-        setLoading(false);
       }
-    }
+    });
   };
 
   const handleOpenLinkModal = async (category) => {
@@ -171,16 +180,16 @@ const Categories = () => {
         setShowLinkModal(false);
         setLinkedDecks([]);
         setSelectedCategory(null);
-        alert('Decks linked successfully!');
+        setModal({ isOpen: true, title: 'Success', message: 'Decks linked successfully!', type: 'success', showCancel: false, onConfirm: null });
       } else {
         console.error('Response status:', response.status);
         const errorText = await response.text();
         console.error('Error response:', errorText);
-        alert('Failed to link decks. Status: ' + response.status);
+        setModal({ isOpen: true, title: 'Error', message: 'Failed to link decks. Status: ' + response.status, type: 'error', showCancel: false, onConfirm: null });
       }
     } catch (error) {
       console.error('Error linking decks:', error);
-      alert('Error linking decks: ' + error.message);
+      setModal({ isOpen: true, title: 'Error', message: 'Error linking decks: ' + error.message, type: 'error', showCancel: false, onConfirm: null });
     } finally {
       setLoading(false);
     }
@@ -401,6 +410,16 @@ const Categories = () => {
           </div>
         </div>
       )}
+
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 };

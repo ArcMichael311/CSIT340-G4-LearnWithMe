@@ -31,10 +31,16 @@ public class ProgressController {
     @PostMapping("/answer")
     public ResponseEntity<Map<String, Object>> recordDeckProgress(@RequestBody Map<String, Object> request) {
         try {
+            System.out.println("[ProgressController] Received request: " + request);
+            
             Long userId = Long.valueOf(request.get("userId").toString());
             Long deckId = Long.valueOf(request.get("deckId").toString());
             Long correctAnswers = Long.valueOf(request.get("correctAnswers").toString());
             Long totalAnswers = Long.valueOf(request.get("totalAnswers").toString());
+            
+            System.out.println("[ProgressController] Parsed values - UserId: " + userId + 
+                             ", DeckId: " + deckId + ", Correct: " + correctAnswers + 
+                             ", Total: " + totalAnswers);
             
             // Calculate accuracy percentage
             Integer accuracy = totalAnswers > 0 ? (int) Math.round((correctAnswers * 100.0) / totalAnswers) : 0;
@@ -42,10 +48,14 @@ public class ProgressController {
             ProgressEntity progress = new ProgressEntity();
             progress.setUserId(userId);
             progress.setDeckId(deckId);
+            progress.setCardId(0L); // 0 for deck-level progress tracking
             progress.setCorrectAnswers(correctAnswers);
             progress.setTotalAnswers(totalAnswers);
             progress.setAccuracy(accuracy);
             progress.setStudyDate(LocalDate.now());
+            progress.setStatus("completed"); // Set status as completed
+            
+            System.out.println("[ProgressController] Creating progress entity: " + progress);
             
             ProgressEntity created = progressService.create(progress);
             
@@ -55,14 +65,17 @@ public class ProgressController {
             response.put("totalAnswers", created.getTotalAnswers());
             response.put("accuracy", created.getAccuracy());
             
-            System.out.println("[ProgressController] Recorded deck progress - UserId: " + userId + 
+            System.out.println("[ProgressController] Successfully recorded deck progress - UserId: " + userId + 
                              ", DeckId: " + deckId + ", Correct: " + correctAnswers + 
                              "/" + totalAnswers + ", Accuracy: " + accuracy + "%");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             System.err.println("[ProgressController] Error recording deck progress: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("request", request);
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
@@ -81,19 +94,28 @@ public class ProgressController {
                 return ResponseEntity.ok(response);
             }
             
-            // Get the most recent progress entry for this deck
-            ProgressEntity latestProgress = deckProgress.get(0);
+            // Aggregate all study sessions for this deck
+            long totalCorrect = 0;
+            long totalAnswered = 0;
+            
+            for (ProgressEntity progress : deckProgress) {
+                totalCorrect += progress.getCorrectAnswers();
+                totalAnswered += progress.getTotalAnswers();
+            }
+            
+            int overallAccuracy = totalAnswered > 0 ? (int) Math.round((totalCorrect * 100.0) / totalAnswered) : 0;
             
             Map<String, Object> response = new HashMap<>();
             response.put("deckId", deckId);
-            response.put("correct", latestProgress.getCorrectAnswers());
-            response.put("total", latestProgress.getTotalAnswers());
-            response.put("percentage", latestProgress.getAccuracy());
+            response.put("correct", totalCorrect);
+            response.put("total", totalAnswered);
+            response.put("percentage", overallAccuracy);
             
-            System.out.println("[ProgressController] Deck score - DeckId: " + deckId + 
-                             ", Correct: " + latestProgress.getCorrectAnswers() + 
-                             ", Total: " + latestProgress.getTotalAnswers() + 
-                             ", Accuracy: " + latestProgress.getAccuracy() + "%");
+            System.out.println("[ProgressController] Deck score (aggregated) - DeckId: " + deckId + 
+                             ", Sessions: " + deckProgress.size() +
+                             ", Correct: " + totalCorrect + 
+                             ", Total: " + totalAnswered + 
+                             ", Accuracy: " + overallAccuracy + "%");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             System.err.println("[ProgressController] Error getting deck score: " + e.getMessage());
