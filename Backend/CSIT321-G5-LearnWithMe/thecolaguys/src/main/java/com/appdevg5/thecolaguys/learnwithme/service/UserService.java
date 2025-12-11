@@ -2,6 +2,7 @@ package com.appdevg5.thecolaguys.learnwithme.service;
 
 import com.appdevg5.thecolaguys.learnwithme.entity.UserEntity;
 import com.appdevg5.thecolaguys.learnwithme.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,12 +12,16 @@ import java.util.Optional;
 public class UserService {
 
 	private final UserRepository userRepository;
+	private final PasswordEncoder passwordEncoder;
 
-	public UserService(UserRepository userRepository) {
+	public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
 		this.userRepository = userRepository;
+		this.passwordEncoder = passwordEncoder;
 	}
 
 	public UserEntity create(UserEntity user) {
+		// Hash the password before saving
+		user.setPassword(passwordEncoder.encode(user.getPassword()));
 		return userRepository.save(user);
 	}
 
@@ -32,7 +37,10 @@ public class UserService {
 		return userRepository.findById(id).map(existing -> {
 			existing.setFullName(updated.getFullName());
 			existing.setEmail(updated.getEmail());
-			existing.setPassword(updated.getPassword());
+			// Hash password if it's being updated
+			if (updated.getPassword() != null && !updated.getPassword().isEmpty()) {
+				existing.setPassword(passwordEncoder.encode(updated.getPassword()));
+			}
 			return userRepository.save(existing);
 		});
 	}
@@ -49,7 +57,17 @@ public class UserService {
 	}
 
 	public UserEntity findByEmailAndPassword(String email, String password) {
-		return userRepository.findByEmailAndPassword(email, password).orElse(null);
+		// Find user by email
+		Optional<UserEntity> userOpt = userRepository.findByEmail(email);
+		
+		if (userOpt.isPresent()) {
+			UserEntity user = userOpt.get();
+			// Verify the password using BCrypt
+			if (passwordEncoder.matches(password, user.getPassword())) {
+				return user;
+			}
+		}
+		return null;
 	}
 }
 
