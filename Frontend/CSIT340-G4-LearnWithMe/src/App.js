@@ -104,6 +104,15 @@ function LandingPage() {
 
           <p className="hero-note">No credit card required • Free forever</p>
         </div>
+
+        {/* Flashcard Demo */}
+        <div className="hero-illustration">
+          <div className="flashcard-demo">
+            <div className="flashcard card-1">What is photosynthesis?</div>
+            <div className="flashcard card-2">Explain Newton's First Law</div>
+            <div className="flashcard card-3">Define Ecosystem</div>
+          </div>
+        </div>
       </section>
 
       {/* MORE SECTIONS… (unchanged) */}
@@ -112,3 +121,4 @@ function LandingPage() {
 }
 
 export default App;
+
