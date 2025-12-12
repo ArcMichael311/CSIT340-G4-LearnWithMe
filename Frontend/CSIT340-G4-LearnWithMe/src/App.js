@@ -10,42 +10,51 @@ function App() {
     const savedUser = localStorage.getItem('currentUser');
     return savedUser ? JSON.parse(savedUser) : null;
   });
+  const [isValidating, setIsValidating] = useState(true);
 
-  // Validate user session on mount and when user changes
+  // Validate user session on mount and refresh
   useEffect(() => {
     const validateSession = async () => {
-      if (currentUser) {
+      const savedUser = localStorage.getItem('currentUser');
+      
+      if (savedUser) {
         try {
-          // Verify the user still exists in the database
-          const response = await fetch(`http://localhost:8080/api/users/get/${currentUser.userId}`);
+          const userData = JSON.parse(savedUser);
           
-          if (!response.ok) {
-            // User no longer exists or server error - clear session
-            console.warn('Session validation failed - user not found');
-            setCurrentUser(null);
-            localStorage.removeItem('currentUser');
+          // Validate with backend that this user still exists and credentials match
+          const response = await fetch('http://localhost:8080/api/users/validate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: userData.userId,
+              email: userData.email
+            }),
+          });
+
+          if (response.ok) {
+            const validatedUser = await response.json();
+            setCurrentUser(validatedUser);
           } else {
-            const userData = await response.json();
-            // Verify critical fields haven't been tampered with
-            if (userData.email !== currentUser.email || userData.fullName !== currentUser.fullName) {
-              console.warn('Session data mismatch - clearing session');
-              setCurrentUser(null);
-              localStorage.removeItem('currentUser');
-            }
+            // Session invalid - clear localStorage
+            console.warn('Session validation failed - clearing user data');
+            localStorage.removeItem('currentUser');
+            setCurrentUser(null);
           }
         } catch (error) {
           console.error('Session validation error:', error);
-          // On error, clear session to be safe
-          setCurrentUser(null);
           localStorage.removeItem('currentUser');
+          setCurrentUser(null);
         }
       }
+      
+      setIsValidating(false);
     };
 
     validateSession();
   }, []);
 
-  // Sync to localStorage when user changes
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -61,6 +70,22 @@ function App() {
   const handleLogout = () => {
     setCurrentUser(null);
   };
+
+  // Show loading state while validating session
+  if (isValidating) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontSize: '18px',
+        color: '#666'
+      }}>
+        Validating session...
+      </div>
+    );
+  }
 
   return (
     <Router>
