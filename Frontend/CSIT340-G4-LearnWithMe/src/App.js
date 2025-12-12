@@ -11,6 +11,41 @@ function App() {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
+  // Validate user session on mount and when user changes
+  useEffect(() => {
+    const validateSession = async () => {
+      if (currentUser) {
+        try {
+          // Verify the user still exists in the database
+          const response = await fetch(`http://localhost:8080/api/users/get/${currentUser.userId}`);
+          
+          if (!response.ok) {
+            // User no longer exists or server error - clear session
+            console.warn('Session validation failed - user not found');
+            setCurrentUser(null);
+            localStorage.removeItem('currentUser');
+          } else {
+            const userData = await response.json();
+            // Verify critical fields haven't been tampered with
+            if (userData.email !== currentUser.email || userData.fullName !== currentUser.fullName) {
+              console.warn('Session data mismatch - clearing session');
+              setCurrentUser(null);
+              localStorage.removeItem('currentUser');
+            }
+          }
+        } catch (error) {
+          console.error('Session validation error:', error);
+          // On error, clear session to be safe
+          setCurrentUser(null);
+          localStorage.removeItem('currentUser');
+        }
+      }
+    };
+
+    validateSession();
+  }, []);
+
+  // Sync to localStorage when user changes
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('currentUser', JSON.stringify(currentUser));
