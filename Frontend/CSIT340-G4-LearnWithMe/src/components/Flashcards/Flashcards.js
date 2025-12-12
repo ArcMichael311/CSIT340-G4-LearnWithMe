@@ -26,7 +26,7 @@ const Flashcards = ({ deck, onBack, autoStartStudy }) => {
   const [userAnswer, setUserAnswer] = useState('');
   const [selectedOption, setSelectedOption] = useState(null);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [cardAnswerStates, setCardAnswerStates] = useState({}); // Track which cards have shown answers
+  const [cardAnswers, setCardAnswers] = useState({}); // Track answers for each card
   const [score, setScore] = useState(0);
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [isCorrect, setIsCorrect] = useState(null);
@@ -303,7 +303,7 @@ const Flashcards = ({ deck, onBack, autoStartStudy }) => {
     setTotalAnswered(0);
     setIsCorrect(null);
     setHasCheckedAnswer(false);
-    setCardAnswerStates({}); // Reset all card answer states
+    setCardAnswers({}); // Reset all answers
     const firstCard = flashcards[0];
     setTimeRemaining(firstCard.timer);
     setTimerActive(true);
@@ -378,22 +378,31 @@ const Flashcards = ({ deck, onBack, autoStartStudy }) => {
 
   const handleNextCard = () => {
     if (currentCardIndex < flashcards.length - 1) {
-      const nextCard = flashcards[currentCardIndex + 1];
-      setCurrentCardIndex(currentCardIndex + 1);
+      const nextIndex = currentCardIndex + 1;
+      const nextCard = flashcards[nextIndex];
+      setCurrentCardIndex(nextIndex);
       setIsFlipped(false);
-      setShowAnswer(false); // Always hide answer for new card
-      setUserAnswer('');
-      setSelectedOption(null);
-      setIsCorrect(null);
-      setHasCheckedAnswer(false);
-      // Remove this card's answer state so it shows fresh options
-      setCardAnswerStates(prev => {
-        const newState = { ...prev };
-        delete newState[currentCardIndex + 1];
-        return newState;
-      });
-      setTimeRemaining(nextCard.timer);
-      setTimerActive(true);
+      
+      // Check if this card was already answered
+      const previousAnswer = cardAnswers[nextIndex];
+      if (previousAnswer) {
+        // Card was already answered - show in review mode
+        setShowAnswer(true);
+        setUserAnswer(previousAnswer.userAnswer || '');
+        setSelectedOption(previousAnswer.selectedOption !== undefined ? previousAnswer.selectedOption : null);
+        setIsCorrect(previousAnswer.isCorrect);
+        setHasCheckedAnswer(true);
+        setTimerActive(false);
+      } else {
+        // New card - reset for answering
+        setShowAnswer(false);
+        setUserAnswer('');
+        setSelectedOption(null);
+        setIsCorrect(null);
+        setHasCheckedAnswer(false);
+        setTimeRemaining(nextCard.timer);
+        setTimerActive(true);
+      }
     } else {
       setStudyMode(false);
       setTimerActive(false);
@@ -411,22 +420,30 @@ const Flashcards = ({ deck, onBack, autoStartStudy }) => {
 
   const handlePrevCard = () => {
     if (currentCardIndex > 0) {
-      const prevCard = flashcards[currentCardIndex - 1];
-      setCurrentCardIndex(currentCardIndex - 1);
+      const prevIndex = currentCardIndex - 1;
+      const prevCard = flashcards[prevIndex];
+      setCurrentCardIndex(prevIndex);
       setIsFlipped(false);
-      setShowAnswer(false); // Always hide answer for previous card
-      setUserAnswer('');
-      setSelectedOption(null);
-      setIsCorrect(null);
-      setHasCheckedAnswer(false);
-      // Remove this card's answer state so it shows fresh options
-      setCardAnswerStates(prev => {
-        const newState = { ...prev };
-        delete newState[currentCardIndex - 1];
-        return newState;
-      });
-      setTimeRemaining(prevCard.timer);
-      setTimerActive(true);
+      
+      // Load the previous answer (it should always exist when going back)
+      const previousAnswer = cardAnswers[prevIndex];
+      if (previousAnswer) {
+        setShowAnswer(true);
+        setUserAnswer(previousAnswer.userAnswer || '');
+        setSelectedOption(previousAnswer.selectedOption !== undefined ? previousAnswer.selectedOption : null);
+        setIsCorrect(previousAnswer.isCorrect);
+        setHasCheckedAnswer(true);
+        setTimerActive(false);
+      } else {
+        // Shouldn't happen, but handle gracefully
+        setShowAnswer(false);
+        setUserAnswer('');
+        setSelectedOption(null);
+        setIsCorrect(null);
+        setHasCheckedAnswer(false);
+        setTimeRemaining(prevCard.timer);
+        setTimerActive(true);
+      }
     }
   };
 
@@ -452,6 +469,16 @@ const Flashcards = ({ deck, onBack, autoStartStudy }) => {
     setShowAnswer(true);
     setTimerActive(false);
 
+    // Save the answer for this card
+    setCardAnswers({
+      ...cardAnswers,
+      [currentCardIndex]: {
+        userAnswer,
+        selectedOption,
+        isCorrect: correct
+      }
+    });
+
     if (correct) {
       setScore(score + 1);
     }
@@ -462,6 +489,16 @@ const Flashcards = ({ deck, onBack, autoStartStudy }) => {
     if (!hasCheckedAnswer) {
       setIsCorrect(false);
       setTotalAnswered(totalAnswered + 1);
+      
+      // Save as incorrect answer
+      setCardAnswers({
+        ...cardAnswers,
+        [currentCardIndex]: {
+          userAnswer,
+          selectedOption,
+          isCorrect: false
+        }
+      });
     }
     setShowAnswer(true);
     setTimerActive(false);
