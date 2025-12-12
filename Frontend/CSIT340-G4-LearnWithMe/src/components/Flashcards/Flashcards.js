@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Flashcards.css';
 import Modal from '../Modal/Modal';
 
-const Flashcards = ({ deck, onBack }) => {
+const Flashcards = ({ deck, onBack, autoStartStudy }) => {
   const [flashcards, setFlashcards] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info', showCancel: false, onConfirm: null });
@@ -40,6 +40,13 @@ const Flashcards = ({ deck, onBack }) => {
       fetchFlashcards();
     }
   }, [deck]);
+
+  // Auto-start study mode if coming from "Study Now" button
+  useEffect(() => {
+    if (autoStartStudy && flashcards.length > 0 && !studyMode) {
+      handleStartStudy();
+    }
+  }, [autoStartStudy, flashcards]);
 
   const fetchFlashcards = async () => {
     try {
