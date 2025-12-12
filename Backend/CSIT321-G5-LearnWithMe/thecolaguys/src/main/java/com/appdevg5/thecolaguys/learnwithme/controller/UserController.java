@@ -48,6 +48,45 @@ public class UserController {
 		}
 	}
 
+	@PostMapping("/validate")
+	public ResponseEntity<?> validateSession(@RequestBody UserValidationRequest request) {
+		try {
+			// Fetch user from database
+			UserEntity user = userService.getById(request.getUserId()).orElse(null);
+			
+			// Validate that user exists and email matches
+			if (user != null && user.getEmail().equals(request.getEmail())) {
+				return ResponseEntity.ok(user);
+			} else {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid session");
+			}
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Validation failed: " + e.getMessage());
+		}
+	}
+
+	// Inner class for validation request
+	public static class UserValidationRequest {
+		private Long userId;
+		private String email;
+
+		public Long getUserId() {
+			return userId;
+		}
+
+		public void setUserId(Long userId) {
+			this.userId = userId;
+		}
+
+		public String getEmail() {
+			return email;
+		}
+
+		public void setEmail(String email) {
+			this.email = email;
+		}
+	}
+
 	@PostMapping("/add")
 	public ResponseEntity<UserEntity> create(@RequestBody UserEntity user) {
 		UserEntity created = userService.create(user);
