@@ -8,9 +8,11 @@ const Dashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedDeck, setSelectedDeck] = useState(null);
+  const [autoStartStudy, setAutoStartStudy] = useState(false);
 
-  const handleDeckSelect = (deck) => {
+  const handleDeckSelect = (deck, startStudy = false) => {
     setSelectedDeck(deck);
+    setAutoStartStudy(startStudy);
     navigate('/dashboard/flashcards');
   };
 
@@ -104,6 +106,7 @@ const Dashboard = ({ user, onLogout }) => {
                 selectedDeck={selectedDeck}
                 currentView="flashcards"
                 onBackToDecks={handleBackToDecks}
+                autoStartStudy={autoStartStudy}
               />
             } 
           />
