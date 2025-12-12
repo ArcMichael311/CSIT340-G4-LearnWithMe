@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import './App.css';
 import Login from './components/Login/Login';
@@ -6,7 +6,62 @@ import Register from './components/Register/Register';
 import Dashboard from './components/Dashboard/Dashboard';
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    const savedUser = localStorage.getItem('currentUser');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+  const [isValidating, setIsValidating] = useState(true);
+
+  // Validate user session on mount and refresh
+  useEffect(() => {
+    const validateSession = async () => {
+      const savedUser = localStorage.getItem('currentUser');
+      
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser);
+          
+          // Validate with backend that this user still exists and credentials match
+          const response = await fetch('http://localhost:8080/api/users/validate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: userData.userId,
+              email: userData.email
+            }),
+          });
+
+          if (response.ok) {
+            const validatedUser = await response.json();
+            setCurrentUser(validatedUser);
+          } else {
+            // Session invalid - clear localStorage
+            console.warn('Session validation failed - clearing user data');
+            localStorage.removeItem('currentUser');
+            setCurrentUser(null);
+          }
+        } catch (error) {
+          console.error('Session validation error:', error);
+          localStorage.removeItem('currentUser');
+          setCurrentUser(null);
+        }
+      }
+      
+      setIsValidating(false);
+    };
+
+    validateSession();
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('currentUser');
+    }
+  }, [currentUser]);
 
   // Handle successful login
   const handleLogin = (userData) => {
@@ -17,6 +72,22 @@ function App() {
   const handleLogout = () => {
     setCurrentUser(null);
   };
+
+  // Show loading state while validating session
+  if (isValidating) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontSize: '18px',
+        color: '#666'
+      }}>
+        Validating session...
+      </div>
+    );
+  }
 
   return (
     <Router>
