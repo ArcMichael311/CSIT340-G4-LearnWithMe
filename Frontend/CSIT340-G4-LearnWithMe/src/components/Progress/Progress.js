@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Progress.css';
+import Modal from '../Modal/Modal';
 
 const Progress = ({ user, onNavigate }) => {
   const [userStats, setUserStats] = useState({
@@ -10,6 +11,9 @@ const Progress = ({ user, onNavigate }) => {
   });
   const [deckScores, setDeckScores] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedDeckHistory, setSelectedDeckHistory] = useState(null);
+  const [historyData, setHistoryData] = useState([]);
 
   useEffect(() => {
     fetchUserStats();
@@ -52,6 +56,7 @@ const Progress = ({ user, onNavigate }) => {
                 score: progressData.correct,
                 totalCards: progressData.total,
                 percentage: progressData.percentage,
+                retakes: progressData.retakes || 0,
                 hasProgress: true
               };
             } else {
@@ -62,6 +67,7 @@ const Progress = ({ user, onNavigate }) => {
                 score: 0,
                 totalCards: 0,
                 percentage: 0,
+                retakes: 0,
                 hasProgress: false
               };
             }
@@ -73,6 +79,7 @@ const Progress = ({ user, onNavigate }) => {
               score: 0,
               totalCards: 0,
               percentage: 0,
+              retakes: 0,
               hasProgress: false
             };
           }
@@ -103,6 +110,22 @@ const Progress = ({ user, onNavigate }) => {
       setDeckScores([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDeckHistory = async (deckId, deckName) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/progress/deck/${deckId}/history`);
+      if (response.ok) {
+        const history = await response.json();
+        setHistoryData(history);
+        setSelectedDeckHistory(deckName);
+        setShowHistoryModal(true);
+      } else {
+        console.error('Failed to fetch deck history');
+      }
+    } catch (error) {
+      console.error('Error fetching deck history:', error);
     }
   };
 
@@ -184,9 +207,25 @@ const Progress = ({ user, onNavigate }) => {
                 <div className="deck-score-header">
                   <div className="deck-score-info">
                     <h3>{deck.name}</h3>
-                    <span className="deck-score-stats">{deck.score}/{deck.totalCards} correct</span>
+                    <span className="deck-score-stats">
+                      {deck.score}/{deck.totalCards} correct • {deck.retakes} retake{deck.retakes !== 1 ? 's' : ''}
+                    </span>
                   </div>
-                  <div className="deck-score-percentage">{deck.percentage}%</div>
+                  <div className="deck-score-actions">
+                    <div className="deck-score-percentage">{deck.percentage}%</div>
+                    {deck.retakes > 0 && (
+                      <button 
+                        className="history-btn"
+                        onClick={() => fetchDeckHistory(deck.id, deck.name)}
+                        title="View study history"
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                          <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                        </svg>
+                        History
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="deck-progress-bar">
                   <div 
@@ -199,6 +238,53 @@ const Progress = ({ user, onNavigate }) => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* History Modal */}
+      {showHistoryModal && (
+        <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
+          <div className="modal history-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Study History: {selectedDeckHistory}</h2>
+              <button className="modal-close" onClick={() => setShowHistoryModal(false)}>
+                ×
+              </button>
+            </div>
+            <div className="history-content">
+              {historyData.length === 0 ? (
+                <p className="no-history">No study sessions recorded yet.</p>
+              ) : (
+                <div className="history-list">
+                  <div className="history-header-row">
+                    <span>Session</span>
+                    <span>Score</span>
+                    <span>Accuracy</span>
+                    <span>Date</span>
+                  </div>
+                  {historyData.map((session) => (
+                    <div key={session.progressId} className="history-item">
+                      <span className="session-number">#{session.sessionNumber}</span>
+                      <span className="session-score">
+                        {session.correctAnswers}/{session.totalAnswers}
+                      </span>
+                      <span 
+                        className="session-accuracy"
+                        style={{
+                          color: session.accuracy >= 80 ? '#48bb78' : session.accuracy >= 60 ? '#ed8936' : '#f56565'
+                        }}
+                      >
+                        {session.accuracy}%
+                      </span>
+                      <span className="session-date">
+                        {new Date(session.studyDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
