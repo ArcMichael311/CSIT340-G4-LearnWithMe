@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Flashcards.css';
 
-const Flashcards = ({ deck, onBack }) => {
+const Flashcards = ({ deck, onBack, autoStartStudy }) => {
   const [flashcards, setFlashcards] = useState([
     {
       id: 1,
@@ -41,6 +41,13 @@ const Flashcards = ({ deck, onBack }) => {
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [isCorrect, setIsCorrect] = useState(null);
   const [hasCheckedAnswer, setHasCheckedAnswer] = useState(false);
+
+  // Auto-start study mode if coming from "Study Now" button
+  useEffect(() => {
+    if (autoStartStudy && flashcards.length > 0 && !studyMode) {
+      handleStartStudy();
+    }
+  }, [autoStartStudy]);
 
   const handleCreateCard = (e) => {
     e.preventDefault();
