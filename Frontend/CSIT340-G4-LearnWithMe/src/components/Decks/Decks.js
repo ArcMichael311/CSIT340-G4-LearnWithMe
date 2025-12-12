@@ -3,7 +3,7 @@ import './Decks.css';
 import Flashcards from '../Flashcards/Flashcards';
 import Modal from '../Modal/Modal';
 
-const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
+const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks, autoStartStudy }) => {
   const [decks, setDecks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -210,7 +210,7 @@ const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
 
   // Show flashcards if a deck is selected
   if (currentView === 'flashcards' && selectedDeck) {
-    return <Flashcards deck={selectedDeck} onBack={handleBackFromFlashcards} />;
+    return <Flashcards deck={selectedDeck} onBack={handleBackFromFlashcards} autoStartStudy={autoStartStudy} />;
   }
 
   return (
@@ -256,13 +256,13 @@ const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
             <div className="deck-actions">
               <button 
                 className="deck-action-btn primary"
-                onClick={() => onDeckSelect(deck)}
+                onClick={() => onDeckSelect(deck, true)}
               >
                 Study Now
               </button>
               <button 
                 className="deck-action-btn secondary"
-                onClick={() => onDeckSelect(deck)}
+                onClick={() => onDeckSelect(deck, false)}
               >
                 View Cards
               </button>
