@@ -15,6 +15,8 @@ public interface ProgressRepository extends JpaRepository<ProgressEntity, Long> 
 
 	List<ProgressEntity> findByDeckId(Long deckId);
 
+	void deleteByDeckId(Long deckId);
+
 	Optional<ProgressEntity> findByUserIdAndDeckId(Long userId, Long deckId);
 
 	@Query("SELECT p FROM ProgressEntity p WHERE p.userId = :userId ORDER BY p.studyDate DESC")
