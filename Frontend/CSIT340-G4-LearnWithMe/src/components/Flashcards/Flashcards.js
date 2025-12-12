@@ -588,20 +588,6 @@ const Flashcards = ({ deck, onBack }) => {
                 )}
 
                 <button 
-                  className="check-answer-btn"
-                  onClick={handleCheckAnswer}
-                  disabled={
-                    (currentCard.type === 'multiple-choice' && selectedOption === null) ||
-                    (currentCard.type !== 'multiple-choice' && !userAnswer.trim())
-                  }
-                >
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                  </svg>
-                  Check Answer
-                </button>
-
-                <button 
                   className="reveal-btn"
                   onClick={handleShowAnswer}
                 >
@@ -843,9 +829,6 @@ const Flashcards = ({ deck, onBack }) => {
             </div>
             <h3>No flashcards yet</h3>
             <p>Create your first flashcard to start studying!</p>
-            <button className="create-card-btn" onClick={() => setShowCreateModal(true)}>
-              <span>+</span> Add Card
-            </button>
           </div>
         )}
       </div>
