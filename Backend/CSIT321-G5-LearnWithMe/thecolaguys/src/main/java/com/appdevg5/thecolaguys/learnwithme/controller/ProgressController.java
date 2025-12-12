@@ -91,6 +91,7 @@ public class ProgressController {
                 response.put("correct", 0);
                 response.put("total", 0);
                 response.put("percentage", 0);
+                response.put("retakes", 0);
                 return ResponseEntity.ok(response);
             }
             
@@ -110,6 +111,7 @@ public class ProgressController {
             response.put("correct", totalCorrect);
             response.put("total", totalAnswered);
             response.put("percentage", overallAccuracy);
+            response.put("retakes", deckProgress.size()); // Number of study sessions
             
             System.out.println("[ProgressController] Deck score (aggregated) - DeckId: " + deckId + 
                              ", Sessions: " + deckProgress.size() +
@@ -144,6 +146,37 @@ public class ProgressController {
     @GetMapping("/deck/{deckId}")
     public ResponseEntity<List<ProgressEntity>> getByDeck(@PathVariable Long deckId) {
         return ResponseEntity.ok(progressService.getByDeckId(deckId));
+    }
+
+    @GetMapping("/deck/{deckId}/history")
+    public ResponseEntity<List<Map<String, Object>>> getDeckHistory(@PathVariable Long deckId) {
+        try {
+            List<ProgressEntity> history = progressService.getByDeckId(deckId);
+            
+            // Transform to more readable format with session numbers
+            List<Map<String, Object>> formattedHistory = new java.util.ArrayList<>();
+            int sessionNumber = 1;
+            
+            for (ProgressEntity progress : history) {
+                Map<String, Object> session = new HashMap<>();
+                session.put("sessionNumber", sessionNumber++);
+                session.put("progressId", progress.getProgressId());
+                session.put("correctAnswers", progress.getCorrectAnswers());
+                session.put("totalAnswers", progress.getTotalAnswers());
+                session.put("accuracy", progress.getAccuracy());
+                session.put("studyDate", progress.getStudyDate().toString());
+                session.put("status", progress.getStatus());
+                formattedHistory.add(session);
+            }
+            
+            System.out.println("[ProgressController] Deck history - DeckId: " + deckId + 
+                             ", Sessions: " + formattedHistory.size());
+            return ResponseEntity.ok(formattedHistory);
+        } catch (Exception e) {
+            System.err.println("[ProgressController] Error getting deck history: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PutMapping("/update/{id}")
