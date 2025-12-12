@@ -286,17 +286,6 @@ const Flashcards = ({ deck, onBack }) => {
                 )}
 
                 <button 
-                  className="check-answer-btn"
-                  onClick={handleCheckAnswer}
-                  disabled={
-                    (currentCard.type === 'multiple-choice' && selectedOption === null) ||
-                    (currentCard.type !== 'multiple-choice' && !userAnswer.trim())
-                  }
-                >
-                  ✓ Check Answer
-                </button>
-
-                <button 
                   className="reveal-btn"
                   onClick={handleShowAnswer}
                 >
@@ -450,9 +439,6 @@ const Flashcards = ({ deck, onBack }) => {
             <div className="empty-icon">📇</div>
             <h3>No flashcards yet</h3>
             <p>Create your first flashcard to start studying!</p>
-            <button className="create-card-btn" onClick={() => setShowCreateModal(true)}>
-              <span>+</span> Add Card
-            </button>
           </div>
         )}
       </div>
