@@ -5,6 +5,7 @@ import com.appdevg5.thecolaguys.learnwithme.repository.DecksRepository;
 import com.appdevg5.thecolaguys.learnwithme.repository.FlashcardsRepository;
 import com.appdevg5.thecolaguys.learnwithme.repository.Deck_CategoriesRepository;
 import com.appdevg5.thecolaguys.learnwithme.repository.CategoryDeckRepository;
+import com.appdevg5.thecolaguys.learnwithme.repository.ProgressRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,12 +19,14 @@ public class DecksService {
 	private final FlashcardsRepository flashcardsRepository;
 	private final Deck_CategoriesRepository deck_categoriesRepository;
 	private final CategoryDeckRepository categoryDeckRepository;
+	private final ProgressRepository progressRepository;
 
-	public DecksService(DecksRepository decksRepository, FlashcardsRepository flashcardsRepository, Deck_CategoriesRepository deck_categoriesRepository, CategoryDeckRepository categoryDeckRepository) {
+	public DecksService(DecksRepository decksRepository, FlashcardsRepository flashcardsRepository, Deck_CategoriesRepository deck_categoriesRepository, CategoryDeckRepository categoryDeckRepository, ProgressRepository progressRepository) {
 		this.decksRepository = decksRepository;
 		this.flashcardsRepository = flashcardsRepository;
 		this.deck_categoriesRepository = deck_categoriesRepository;
 		this.categoryDeckRepository = categoryDeckRepository;
+		this.progressRepository = progressRepository;
 	}
 
 	public List<DecksEntity> findAll() {
@@ -50,6 +53,9 @@ public class DecksService {
 	@Transactional
 	public void deleteById(Long id) {
 		System.out.println("[DecksService] Deleting deck: " + id);
+		// Delete all progress records associated with this deck
+		progressRepository.deleteByDeckId(id);
+		System.out.println("[DecksService] Deleted progress records for deck: " + id);
 		// Delete all flashcards associated with this deck first
 		flashcardsRepository.deleteByDeckId(id);
 		System.out.println("[DecksService] Deleted flashcards for deck: " + id);

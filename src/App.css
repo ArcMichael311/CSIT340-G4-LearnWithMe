@@ -69,13 +69,18 @@ body, html, #root {
 }
 
 .nav-btn {
-  padding: 0.625rem 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  padding: 0.625rem 0;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   border: none;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 .login-btn {

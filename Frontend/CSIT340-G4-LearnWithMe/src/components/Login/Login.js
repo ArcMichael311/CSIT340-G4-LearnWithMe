@@ -9,13 +9,14 @@ const Login = ({ onLogin }) => {
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    if (error) setError(''); // Clear error when user types
   };
 
   const handleSubmit = async (e) => {
@@ -46,12 +47,12 @@ const Login = ({ onLogin }) => {
         onLogin(userData);
         navigate('/dashboard');
       } else {
-        const error = await response.text();
-        alert('Login failed: ' + error);
+        await response.text();
+        setError('Invalid email or password');
       }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Failed to connect to server. Please try again.');
+    } catch (err) {
+      console.error('Error:', err);
+      setError('Failed to connect to server. Please try again.');
     }
   };
 
@@ -105,20 +106,14 @@ const Login = ({ onLogin }) => {
                 )}
               </button>
             </div>
-          </div>
-
-          <div className="form-options">
-            <label className="checkbox-container">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-              <span>Remember me</span>
-            </label>
-            <a href="#forgot-password" className="forgot-password">
-              Forgot Password?
-            </a>
+            {error && (
+              <div className="error-message">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {error}
+              </div>
+            )}
           </div>
 
           <button type="submit" className="login-btn">

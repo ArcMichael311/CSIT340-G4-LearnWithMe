@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Flashcards.css';
 
-const Flashcards = ({ deck, onBack }) => {
+const Flashcards = ({ deck, onBack, autoStartStudy }) => {
   const [flashcards, setFlashcards] = useState([
     {
       id: 1,
@@ -41,6 +41,14 @@ const Flashcards = ({ deck, onBack }) => {
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [isCorrect, setIsCorrect] = useState(null);
   const [hasCheckedAnswer, setHasCheckedAnswer] = useState(false);
+  const [cardAnswers, setCardAnswers] = useState({}); // Track answers for each card
+
+  // Auto-start study mode if coming from "Study Now" button
+  useEffect(() => {
+    if (autoStartStudy && flashcards.length > 0 && !studyMode) {
+      handleStartStudy();
+    }
+  }, [autoStartStudy]);
 
   const handleCreateCard = (e) => {
     e.preventDefault();
@@ -91,6 +99,7 @@ const Flashcards = ({ deck, onBack }) => {
     setTotalAnswered(0);
     setIsCorrect(null);
     setHasCheckedAnswer(false);
+    setCardAnswers({}); // Reset all answers
     const firstCard = flashcards[0];
     setTimeRemaining(firstCard.timer);
     setTimerActive(true);
@@ -122,16 +131,31 @@ const Flashcards = ({ deck, onBack }) => {
 
   const handleNextCard = () => {
     if (currentCardIndex < flashcards.length - 1) {
-      const nextCard = flashcards[currentCardIndex + 1];
-      setCurrentCardIndex(currentCardIndex + 1);
+      const nextIndex = currentCardIndex + 1;
+      const nextCard = flashcards[nextIndex];
+      setCurrentCardIndex(nextIndex);
       setIsFlipped(false);
-      setShowAnswer(false);
-      setUserAnswer('');
-      setSelectedOption(null);
-      setIsCorrect(null);
-      setHasCheckedAnswer(false);
-      setTimeRemaining(nextCard.timer);
-      setTimerActive(true);
+      
+      // Check if this card was already answered
+      const previousAnswer = cardAnswers[nextIndex];
+      if (previousAnswer) {
+        // Card was already answered - show in review mode
+        setShowAnswer(true);
+        setUserAnswer(previousAnswer.userAnswer || '');
+        setSelectedOption(previousAnswer.selectedOption !== undefined ? previousAnswer.selectedOption : null);
+        setIsCorrect(previousAnswer.isCorrect);
+        setHasCheckedAnswer(true);
+        setTimerActive(false);
+      } else {
+        // New card - reset for answering
+        setShowAnswer(false);
+        setUserAnswer('');
+        setSelectedOption(null);
+        setIsCorrect(null);
+        setHasCheckedAnswer(false);
+        setTimeRemaining(nextCard.timer);
+        setTimerActive(true);
+      }
     } else {
       setStudyMode(false);
       setTimerActive(false);
@@ -142,16 +166,30 @@ const Flashcards = ({ deck, onBack }) => {
 
   const handlePrevCard = () => {
     if (currentCardIndex > 0) {
-      const prevCard = flashcards[currentCardIndex - 1];
-      setCurrentCardIndex(currentCardIndex - 1);
+      const prevIndex = currentCardIndex - 1;
+      const prevCard = flashcards[prevIndex];
+      setCurrentCardIndex(prevIndex);
       setIsFlipped(false);
-      setShowAnswer(false);
-      setUserAnswer('');
-      setSelectedOption(null);
-      setIsCorrect(null);
-      setHasCheckedAnswer(false);
-      setTimeRemaining(prevCard.timer);
-      setTimerActive(true);
+      
+      // Load the previous answer (it should always exist when going back)
+      const previousAnswer = cardAnswers[prevIndex];
+      if (previousAnswer) {
+        setShowAnswer(true);
+        setUserAnswer(previousAnswer.userAnswer || '');
+        setSelectedOption(previousAnswer.selectedOption !== undefined ? previousAnswer.selectedOption : null);
+        setIsCorrect(previousAnswer.isCorrect);
+        setHasCheckedAnswer(true);
+        setTimerActive(false);
+      } else {
+        // Shouldn't happen, but handle gracefully
+        setShowAnswer(false);
+        setUserAnswer('');
+        setSelectedOption(null);
+        setIsCorrect(null);
+        setHasCheckedAnswer(false);
+        setTimeRemaining(prevCard.timer);
+        setTimerActive(true);
+      }
     }
   };
 
@@ -177,6 +215,16 @@ const Flashcards = ({ deck, onBack }) => {
     setShowAnswer(true);
     setTimerActive(false);
 
+    // Save the answer for this card
+    setCardAnswers({
+      ...cardAnswers,
+      [currentCardIndex]: {
+        userAnswer,
+        selectedOption,
+        isCorrect: correct
+      }
+    });
+
     if (correct) {
       setScore(score + 1);
     }
@@ -187,6 +235,16 @@ const Flashcards = ({ deck, onBack }) => {
     if (!hasCheckedAnswer) {
       setIsCorrect(false);
       setTotalAnswered(totalAnswered + 1);
+      
+      // Save as incorrect answer
+      setCardAnswers({
+        ...cardAnswers,
+        [currentCardIndex]: {
+          userAnswer,
+          selectedOption,
+          isCorrect: false
+        }
+      });
     }
     setShowAnswer(true);
     setTimerActive(false);
@@ -284,17 +342,6 @@ const Flashcards = ({ deck, onBack }) => {
                     rows="6"
                   />
                 )}
-
-                <button 
-                  className="check-answer-btn"
-                  onClick={handleCheckAnswer}
-                  disabled={
-                    (currentCard.type === 'multiple-choice' && selectedOption === null) ||
-                    (currentCard.type !== 'multiple-choice' && !userAnswer.trim())
-                  }
-                >
-                  ✓ Check Answer
-                </button>
 
                 <button 
                   className="reveal-btn"
@@ -450,9 +497,6 @@ const Flashcards = ({ deck, onBack }) => {
             <div className="empty-icon">📇</div>
             <h3>No flashcards yet</h3>
             <p>Create your first flashcard to start studying!</p>
-            <button className="create-card-btn" onClick={() => setShowCreateModal(true)}>
-              <span>+</span> Add Card
-            </button>
           </div>
         )}
       </div>

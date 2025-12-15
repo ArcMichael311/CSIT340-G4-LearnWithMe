@@ -37,6 +37,38 @@ body, html, #root {
   align-items: center;
 }
 
+.btn-login-new {
+  padding: 0.6rem 1.5rem; /* increased padding */
+  font-size: 1rem; /* larger text */
+  background-color: #f2b705; /* bright yellow */
+  color: #1a1a1a; /* dark text */
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-login-new:hover {
+  background-color: #f57b5a; /* lighter yellow on hover */
+  transform: translateY(-2px);
+}
+
+.btn-signup-new {
+  padding: 0.6rem 1.5rem; /* increased padding */
+  font-size: 1rem; /* larger text */
+  background-color: #f2b705; /* orange/red */
+  color: #1a1a1a; /* white text */
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-signup-new:hover {
+  background-color: #f57b5a; /* lighter orange on hover */
+  transform: translateY(-2px);
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -69,13 +101,18 @@ body, html, #root {
 }
 
 .nav-btn {
-  padding: 0.625rem 1.5rem;
-  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 170px;
+  padding: 0.875rem 0;
+  border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   border: none;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
+  white-space: nowrap;
 }
 
 .login-btn {
@@ -578,3 +615,66 @@ body, html, #root {
   }
 }
 
+/* Floating Flashcards (Themed to match the UI) */
+.flashcard-demo {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  height: 300px;
+  margin: 0 auto;
+}
+
+.flashcard {
+  position: absolute;
+  width: 300px;
+  height: 200px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-align: center;
+  color: #f2f2f2; /* White text to match your theme */
+  animation: float 3s ease-in-out infinite;
+  box-shadow: 0 10px 40px rgba(242, 183, 5, 0.25); /* Soft yellow glow to match theme */
+}
+
+/* Card 1 - Yellow/Orange Gradient */
+.card-1 {
+  top: 0;
+  left: 0;
+  background: linear-gradient(135deg, #f2b705 0%, #f2522e 100%);
+  color: #1a1a1a; /* Dark text for contrast */
+  z-index: 3;
+}
+
+/* Card 2 - Soft Pink Gradient */
+.card-2 {
+  top: 20px;
+  left: 20px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: #f2f2f2;
+  z-index: 2;
+  animation-delay: 0.5s;
+}
+
+/* Card 3 - Blue Gradient */
+.card-3 {
+  top: 40px;
+  left: 40px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: #1a1a1a; /* Dark text for contrast */
+  z-index: 1;
+  animation-delay: 1s;
+}
+
+/* Floating animation for the flashcards */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}

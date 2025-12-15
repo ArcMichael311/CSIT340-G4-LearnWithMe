@@ -24,7 +24,7 @@ public class UserController {
 		try {
 			// Check if email already exists
 			if (userService.existsByEmail(user.getEmail())) {
-				return ResponseEntity.badRequest().body("Email already exists");
+				return ResponseEntity.badRequest().body("This email already exists");
 			}
 			
 			UserEntity registered = userService.create(user);
@@ -45,6 +45,45 @@ public class UserController {
 			}
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Login failed: " + e.getMessage());
+		}
+	}
+
+	@PostMapping("/validate")
+	public ResponseEntity<?> validateSession(@RequestBody UserValidationRequest request) {
+		try {
+			// Fetch user from database
+			UserEntity user = userService.getById(request.getUserId()).orElse(null);
+			
+			// Validate that user exists and email matches
+			if (user != null && user.getEmail().equals(request.getEmail())) {
+				return ResponseEntity.ok(user);
+			} else {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid session");
+			}
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Validation failed: " + e.getMessage());
+		}
+	}
+
+	// Inner class for validation request
+	public static class UserValidationRequest {
+		private Long userId;
+		private String email;
+
+		public Long getUserId() {
+			return userId;
+		}
+
+		public void setUserId(Long userId) {
+			this.userId = userId;
+		}
+
+		public String getEmail() {
+			return email;
+		}
+
+		public void setEmail(String email) {
+			this.email = email;
 		}
 	}
 

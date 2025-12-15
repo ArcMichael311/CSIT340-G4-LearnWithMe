@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import './Decks.css';
 import Flashcards from '../Flashcards/Flashcards';
+import Modal from '../Modal/Modal';
 
-const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
+const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks, autoStartStudy }) => {
   const [decks, setDecks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingDeck, setEditingDeck] = useState(null);
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info', showCancel: false, onConfirm: null });
   const [newDeck, setNewDeck] = useState({
     title: '',
     description: '',
@@ -34,17 +38,14 @@ const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
               const cardsResponse = await fetch(`${FLASHCARDS_API_URL}/deck/${deck.deckId}`);
               const cards = cardsResponse.ok ? await cardsResponse.json() : [];
               
-              // Check if deck was studied today from Progress table
+              // Check if deck was studied from Progress table
               let isStudied = false;
               try {
                 const progressResponse = await fetch(`http://localhost:8080/api/progress/deck/${deck.deckId}`);
                 if (progressResponse.ok) {
                   const progressList = await progressResponse.json();
-                  if (progressList && progressList.length > 0) {
-                    const today = new Date().toISOString().split('T')[0];
-                    // Check if any progress record is from today
-                    isStudied = progressList.some(p => p.date === today);
-                  }
+                  // If there's any progress data at all, mark as studied
+                  isStudied = progressList && progressList.length > 0;
                 }
               } catch (progressError) {
                 console.error('Error fetching progress:', progressError);
@@ -114,36 +115,90 @@ const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
         setNewDeck({ title: '', description: '', color: '#667eea' });
       } else {
         console.error('Error creating deck:', response.statusText);
-        alert('Failed to create deck. Please try again.');
+        setModal({ isOpen: true, title: 'Error', message: 'Failed to create deck. Please try again.', type: 'error', showCancel: false, onConfirm: null });
       }
     } catch (error) {
       console.error('Error creating deck:', error);
-      alert('Error creating deck: ' + error.message);
+      setModal({ isOpen: true, title: 'Error', message: 'Error creating deck: ' + error.message, type: 'error', showCancel: false, onConfirm: null });
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteDeck = async (id) => {
-    if (window.confirm('Are you sure you want to delete this deck?')) {
-      try {
-        setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/${id}`, {
-          method: 'DELETE'
-        });
+    setModal({
+      isOpen: true,
+      title: 'Delete Deck',
+      message: 'Are you sure you want to delete this deck?',
+      type: 'warning',
+      showCancel: true,
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          const response = await fetch(`${API_BASE_URL}/${id}`, {
+            method: 'DELETE'
+          });
 
-        if (response.ok) {
-          setDecks(decks.filter(deck => deck.deckId !== id));
-        } else {
-          console.error('Error deleting deck:', response.statusText);
-          alert('Failed to delete deck. Please try again.');
+          if (response.ok) {
+            setDecks(decks.filter(deck => deck.deckId !== id));
+          } else {
+            console.error('Error deleting deck:', response.statusText);
+            setModal({ isOpen: true, title: 'Error', message: 'Failed to delete deck. Please try again.', type: 'error', showCancel: false, onConfirm: null });
+          }
+        } catch (error) {
+          console.error('Error deleting deck:', error);
+          setModal({ isOpen: true, title: 'Error', message: 'Error deleting deck: ' + error.message, type: 'error', showCancel: false, onConfirm: null });
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error deleting deck:', error);
-        alert('Error deleting deck: ' + error.message);
-      } finally {
-        setLoading(false);
       }
+    });
+  };
+
+  const handleEditDeck = (deck) => {
+    setEditingDeck({
+      deckId: deck.deckId,
+      title: deck.title,
+      description: deck.description,
+      color: deck.color || '#667eea'
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateDeck = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/${editingDeck.deckId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: editingDeck.title,
+          description: editingDeck.description
+        })
+      });
+
+      if (response.ok) {
+        const updatedDeck = await response.json();
+        setDecks(decks.map(d => 
+          d.deckId === editingDeck.deckId 
+            ? { ...d, title: updatedDeck.title, description: updatedDeck.description }
+            : d
+        ));
+        setShowEditModal(false);
+        setEditingDeck(null);
+      } else {
+        console.error('Error updating deck:', response.statusText);
+        setModal({ isOpen: true, title: 'Error', message: 'Failed to update deck. Please try again.', type: 'error', showCancel: false, onConfirm: null });
+      }
+    } catch (error) {
+      console.error('Error updating deck:', error);
+      setModal({ isOpen: true, title: 'Error', message: 'Error updating deck: ' + error.message, type: 'error', showCancel: false, onConfirm: null });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -155,7 +210,7 @@ const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
 
   // Show flashcards if a deck is selected
   if (currentView === 'flashcards' && selectedDeck) {
-    return <Flashcards deck={selectedDeck} onBack={handleBackFromFlashcards} />;
+    return <Flashcards deck={selectedDeck} onBack={handleBackFromFlashcards} autoStartStudy={autoStartStudy} />;
   }
 
   return (
@@ -201,15 +256,27 @@ const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
             <div className="deck-actions">
               <button 
                 className="deck-action-btn primary"
-                onClick={() => onDeckSelect(deck)}
+                onClick={() => onDeckSelect(deck, true)}
               >
                 Study Now
               </button>
               <button 
                 className="deck-action-btn secondary"
-                onClick={() => onDeckSelect(deck)}
+                onClick={() => onDeckSelect(deck, false)}
               >
                 View Cards
+              </button>
+              <button 
+                className="deck-action-btn edit"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditDeck(deck);
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg>
+                Edit
               </button>
             </div>
           </div>
@@ -288,6 +355,66 @@ const Decks = ({ onDeckSelect, selectedDeck, currentView, onBackToDecks }) => {
           </div>
         </div>
       )}
+
+      {/* Edit Deck Modal */}
+      {showEditModal && editingDeck && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit Deck</h2>
+              <button className="modal-close" onClick={() => setShowEditModal(false)}>
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateDeck}>
+              <div className="form-group">
+                <label>Deck Title</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Spanish Vocabulary"
+                  value={editingDeck.title}
+                  onChange={(e) => setEditingDeck({ ...editingDeck, title: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Description</label>
+                <textarea
+                  placeholder="What's this deck about?"
+                  value={editingDeck.description}
+                  onChange={(e) => setEditingDeck({ ...editingDeck, description: e.target.value })}
+                  rows="3"
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button 
+                  type="button" 
+                  className="btn-cancel"
+                  onClick={() => setShowEditModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-create">
+                  Update Deck
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 };

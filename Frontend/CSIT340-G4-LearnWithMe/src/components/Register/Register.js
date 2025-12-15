@@ -12,25 +12,22 @@ const Register = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    if (error) setError(''); // Clear error when user types
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
-      return;
-    }
-    
-    if (!agreeTerms) {
-      alert("Please agree to the Terms and Conditions");
+      setError("Passwords don't match!");
       return;
     }
     
@@ -50,15 +47,16 @@ const Register = () => {
       if (response.ok) {
         const user = await response.json();
         console.log('Registration successful:', user);
-        alert('Account created successfully! Please login.');
-        navigate('/login');
+        setSuccess(true);
+        setError('');
+        setTimeout(() => navigate('/login'), 2000);
       } else {
-        const error = await response.text();
-        alert('Registration failed: ' + error);
+        const errorText = await response.text();
+        setError(errorText.includes('exists') ? 'Email already exists' : 'Registration failed. Please try again.');
       }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Failed to connect to server. Please try again.');
+    } catch (err) {
+      console.error('Error:', err);
+      setError('Failed to connect to server. Please try again.');
     }
   };
 
@@ -113,6 +111,22 @@ const Register = () => {
               placeholder="Enter your email"
               required
             />
+            {error && (
+              <div className="error-message">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="success-message">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{marginRight: '6px', verticalAlign: 'middle'}}>
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                Account created successfully! Redirecting to login...
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -189,18 +203,6 @@ const Register = () => {
               </button>
             </div>
           </div>
-
-          <label className="checkbox-container">
-            <input
-              type="checkbox"
-              checked={agreeTerms}
-              onChange={(e) => setAgreeTerms(e.target.checked)}
-            />
-            <span>
-              I agree to the <a href="#terms">Terms and Conditions</a> and{' '}
-              <a href="#privacy">Privacy Policy</a>
-            </span>
-          </label>
 
           <button type="submit" className="register-btn">
             Create Account
